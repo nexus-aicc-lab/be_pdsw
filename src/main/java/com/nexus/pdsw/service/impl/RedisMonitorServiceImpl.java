@@ -338,7 +338,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       Map<String, Object> bodyMap = new HashMap<>();
       Map<String, Object> filterMap = new HashMap<>();
 
-      List<Object> assignedCounselorList = new ArrayList<>();
+      // List<Object> assignedCounselorList = new ArrayList<>();
 
       HashOperations<String, Object, Object> hashOperations = redisTemplate.opsForHash();
       HashOperations<String, Object, Object> hashOperations1 = redisTemplate1.opsForHash();
@@ -459,53 +459,53 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
         //   i++;
         // }
 
-        filterMap.put("campaign_id", arrCampaignId);
-        bodyMap.put("filter", filterMap);
+        // filterMap.put("campaign_id", arrCampaignId);
+        // bodyMap.put("filter", filterMap);
 
-        //WebClient로 API서버와 연결
-        WebClient webClient =
-          WebClient
-            .builder()
-            .baseUrl(baseUrl)
-            .defaultHeaders(httpHeaders -> {
-              httpHeaders.add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-              httpHeaders.add("Session-Key", requestDto.getSessionKey());
-            })
-            .build();
+        // //WebClient로 API서버와 연결
+        // WebClient webClient =
+        //   WebClient
+        //     .builder()
+        //     .baseUrl(baseUrl)
+        //     .defaultHeaders(httpHeaders -> {
+        //       httpHeaders.add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        //       httpHeaders.add("Session-Key", requestDto.getSessionKey());
+        //     })
+        //     .build();
 
-        try {
-          //캠페인에 할당된 상담원 가져오기 API 요청
-          Map<String, Object> apiAssignedCounselor =
-            webClient
-              .post()
-              .uri(uriBuilder ->
-                uriBuilder
-                  .path("/pds/collections/campaign-agent")
-                  .build()
-              )
-              .bodyValue(bodyMap)
-              .retrieve()
-              .bodyToMono(Map.class)
-              .block();
+        // try {
+        //   //캠페인에 할당된 상담원 가져오기 API 요청
+        //   Map<String, Object> apiAssignedCounselor =
+        //     webClient
+        //       .post()
+        //       .uri(uriBuilder ->
+        //         uriBuilder
+        //           .path("/pds/collections/campaign-agent")
+        //           .build()
+        //       )
+        //       .bodyValue(bodyMap)
+        //       .retrieve()
+        //       .bodyToMono(Map.class)
+        //       .block();
 
-          //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
-          if (!apiAssignedCounselor.get("result_code").equals(0)) {
-            ResponseDto result = new ResponseDto(apiAssignedCounselor.get("result_code").toString(), apiAssignedCounselor.get("result_msg").toString());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-          }
+        //   //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
+        //   if (!apiAssignedCounselor.get("result_code").equals(0)) {
+        //     ResponseDto result = new ResponseDto(apiAssignedCounselor.get("result_code").toString(), apiAssignedCounselor.get("result_msg").toString());
+        //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+        //   }
 
-          //캠페인에 할당된 상담원이 존재하면
-          if (apiAssignedCounselor.get("result_data") != null) {             
-            List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
+        //   //캠페인에 할당된 상담원이 존재하면
+        //   if (apiAssignedCounselor.get("result_data") != null) {             
+        //     List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
 
-            //할당된 상담원 리스트에 누적 추가
-            for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
-              assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
-            }
-          }            
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+        //     //할당된 상담원 리스트에 누적 추가
+        //     for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
+        //       assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
+        //     }
+        //   }            
+        // } catch (Exception e) {
+        //   e.printStackTrace();
+        // }
 
       //특정 캠페인인 경우
       } else {
@@ -534,9 +534,11 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       // log.info("mapSendingProgressStatusList : {}", mapSendingProgressStatusList.toString());
 
       //수집된 할당된 상담사ID 중복제거
-      List<Object> assignedCounselorDuplicatesRemovedList = assignedCounselorList.stream().distinct().collect(Collectors.toList());
+      // List<Object> assignedCounselorDuplicatesRemovedList = requestDto.getAgentIds() != null ?
+      //   Arrays.stream(requestDto.getAgentIds()).distinct().collect(Collectors.toList()) : new ArrayList<>();
       
-      for (Object assignedCounselor : assignedCounselorDuplicatesRemovedList){
+      
+      // for (Object assignedCounselor : assignedCounselorDuplicatesRemovedList){
 
         for (Object tenantKey : _tenantId.split(",")) {
 
@@ -548,9 +550,9 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
 
             JSONObject jsonObjCounselorState = (JSONObject) jsonCounselorState;
 
-            strCounselorId = jsonObjCounselorState.get("EMPLOYEE").toString();
+            // strCounselorId = jsonObjCounselorState.get("EMPLOYEE").toString();
 
-            if (assignedCounselor.toString().equals(strCounselorId)) {
+            // if (assignedCounselor.toString().equals(strCounselorId)) {
 
               JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
               strStateCode = jsonObjCounselorStateData.get("state").toString();
@@ -558,12 +560,12 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
               //203(휴식), 204(대기), 205(처리), 206(후처리)
               if (strStateCode.equals("204")) {
                 waitingCounselorCnt += 1 ;
-                break;
+                // break;
               }
-            }
+            // }
           }
         }
-      }
+      // }
 
     } catch (Exception e) {
       e.printStackTrace();
