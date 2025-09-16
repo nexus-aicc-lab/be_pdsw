@@ -15,11 +15,13 @@ package com.nexus.pdsw.service;
 
 import org.springframework.http.ResponseEntity;
 
+import com.nexus.pdsw.dto.request.PostAllProgressInfoRequestDto;
 import com.nexus.pdsw.dto.request.PostDialerChannelStatusInfoRequestDto;
 import com.nexus.pdsw.dto.request.PostSendingProgressStatusRequestDto;
 import com.nexus.pdsw.dto.response.monitor.PostDialerChannelStatusInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetProcessStatusInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetProgressInfoResponseDto;
+import com.nexus.pdsw.dto.response.monitor.GetAllProgressInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetSendingProgressStatusResponseDto;
 
 public interface RedisMonitorService {
@@ -55,4 +57,13 @@ public interface RedisMonitorService {
    *  @return ResponseEntity<? super GetSendingProgressStatusResponseDto>
    */
   ResponseEntity<? super GetSendingProgressStatusResponseDto> getSendingProgressStatus(PostSendingProgressStatusRequestDto requestDto);
+  /*
+   *  캠페인별 진행정보 가져오기
+   *  
+   *  @param tenantId           테넌트ID
+   *  @param campaignId         캠페인ID
+   *  @return ResponseEntity<? super GetAllProgressInfoResponseDto>
+   */
+  ResponseEntity<? super GetAllProgressInfoResponseDto> getAllProgressInfo(PostAllProgressInfoRequestDto requestDto);
+  
 }

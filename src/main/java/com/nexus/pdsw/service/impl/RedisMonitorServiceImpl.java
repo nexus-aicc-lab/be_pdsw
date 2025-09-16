@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -27,21 +27,22 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.pdsw.dto.request.PostAllProgressInfoRequestDto;
+import com.nexus.pdsw.dto.request.PostAllProgressInfoDto;
 import com.nexus.pdsw.dto.request.PostDialerChannelStatusInfoRequestDto;
 import com.nexus.pdsw.dto.request.PostSendingProgressStatusRequestDto;
 import com.nexus.pdsw.dto.response.ResponseDto;
 import com.nexus.pdsw.dto.response.monitor.PostDialerChannelStatusInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetProcessStatusInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetProgressInfoResponseDto;
+import com.nexus.pdsw.dto.response.monitor.GetAllProgressInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetSendingProgressStatusResponseDto;
 import com.nexus.pdsw.service.RedisMonitorService;
 
@@ -574,4 +575,60 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
     return GetSendingProgressStatusResponseDto.success(mapSendingProgressStatusList, waitingCounselorCnt, requestDto.getCampaignId());
   }
   
+  /*
+   *  캠페인별 전체 진행정보 가져오기
+   *  
+   *  @param tenantId           테넌트ID
+   *  @param campaignId         캠페인ID
+   *  @return ResponseEntity<? super GetAllProgressInfoResponseDto>
+   */
+  @Override
+  public ResponseEntity<? super GetAllProgressInfoResponseDto> getAllProgressInfo(PostAllProgressInfoRequestDto requestDto) {
+
+    List<Map<String, Object>> mapProgressInfoList = new ArrayList<Map<String, Object>>();
+    List<PostAllProgressInfoDto> campaignList = requestDto.getCampaignList();
+    if( campaignList.size() > 0 ){
+      HashOperations<String, Object, Object> hashOperations = redisTemplate.opsForHash();
+      JSONParser jsonParser = new JSONParser();
+      JSONArray arrJson = new JSONArray();
+      String redisKey = "";
+      Map<Object, Object> redisProgressInfo = new HashMap<>();
+      Map<String, Object> mapItem = new HashMap<>();
+      String tenantId = "";
+      String campaignId = "";
+
+      try {
+        int campaignListCnt = campaignList.size();
+        for( int i=0;i<campaignListCnt;i++){
+          tenantId = campaignList.get(i).getTenantId();
+          campaignId = campaignList.get(i).getCampaignId();
+          redisKey = "monitor:tenant:" + tenantId + ":campaign:" + campaignId + ":statistics";
+          redisProgressInfo = hashOperations.entries(redisKey);
+
+          if (redisProgressInfo == null) {
+            continue;
+          }
+          arrJson = (JSONArray) jsonParser.parse(redisProgressInfo.values().toString());
+        
+          for(Object jsonItem : arrJson) {
+            try {
+              mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              mapItem.put("campaignId", campaignId);
+              mapItem.put("tenantId", tenantId);
+            } catch (JsonMappingException e) {
+              throw new RuntimeException(e);
+            }
+            mapProgressInfoList.add(mapItem);
+          }
+
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        ResponseDto.databaseError();
+      }
+
+      return GetAllProgressInfoResponseDto.success(mapProgressInfoList);
+    }
+    return GetAllProgressInfoResponseDto.success(Collections.emptyList());
+  }
 }

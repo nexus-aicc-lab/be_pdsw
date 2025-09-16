@@ -19,9 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nexus.pdsw.dto.request.PostDialerChannelStatusInfoRequestDto;
 import com.nexus.pdsw.dto.request.PostSendingProgressStatusRequestDto;
+import com.nexus.pdsw.dto.request.PostAllProgressInfoRequestDto;
 import com.nexus.pdsw.dto.response.monitor.PostDialerChannelStatusInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetProcessStatusInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetProgressInfoResponseDto;
+import com.nexus.pdsw.dto.response.monitor.GetAllProgressInfoResponseDto;
 import com.nexus.pdsw.dto.response.monitor.GetSendingProgressStatusResponseDto;
 import com.nexus.pdsw.service.RedisMonitorService;
 
@@ -93,6 +95,21 @@ public class RedisMonitorController {
     @RequestBody PostSendingProgressStatusRequestDto requestDto
   ) {
     ResponseEntity<? super GetSendingProgressStatusResponseDto> response = redisMonitorService.getSendingProgressStatus(requestDto);
+    return response;
+  }
+
+  /*
+   *  전체 진행정보 가져오기
+   *  
+   *  @param tenantId           테넌트ID
+   *  @param campaignId         캠페인ID
+   *  @return ResponseEntity<? super GetAllProgressInfoResponseDto>
+   */
+  @PostMapping("/tenant/campaign/statistics")
+  public ResponseEntity<? super GetAllProgressInfoResponseDto> getAllProgressInfo(
+    @RequestBody PostAllProgressInfoRequestDto requestDto
+  ) {
+    ResponseEntity<? super GetAllProgressInfoResponseDto> response = redisMonitorService.getAllProgressInfo(requestDto);
     return response;
   }
 
