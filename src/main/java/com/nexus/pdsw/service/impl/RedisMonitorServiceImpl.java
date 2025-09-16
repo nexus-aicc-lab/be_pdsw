@@ -613,7 +613,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
           for(Object jsonItem : arrJson) {
             try {
               mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
-              mapItem.put("campaignId", campaignId);
+              mapItem.put("campId", campaignId);
               mapItem.put("tenantId", tenantId);
             } catch (JsonMappingException e) {
               throw new RuntimeException(e);
