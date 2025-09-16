@@ -47,7 +47,7 @@ jobs:
       - name: 서버(PDSW)에 jar파일 업로드
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.PDSW_HOST }}
+          host: ${{ secrets.PDSW_UPDATE_HOST }}
           username: ${{ secrets.PDSW_USER }}
           password: ${{ secrets.PDSW_PASSWORD }}
           port: ${{ secrets.PDSW_PORT }}
@@ -59,7 +59,7 @@ jobs:
       - name: SSH로 서버(PDSW)에 접속후 서버가동
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.PDSW_HOST }}
+          host: ${{ secrets.PDSW_UPDATE_HOST }}
           username: ${{ secrets.PDSW_USER }}
           password: ${{ secrets.PDSW_PASSWORD }}
           port: ${{ secrets.PDSW_PORT }}
