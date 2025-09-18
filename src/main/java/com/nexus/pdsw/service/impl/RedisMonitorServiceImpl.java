@@ -347,17 +347,15 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       JSONArray arrJson = new JSONArray();
       JSONArray arrJsonCounselorState = new JSONArray();
 
-      String strCounselorId = "";
       String strStateCode = "";
       String _tenantId = requestDto.getTenantId();
       String _campaignId = requestDto.getCampaignId();
-
+      String[] _agentIds = requestDto.getAgentIds();
+      
       String redisKey = "";
       Map<Object, Object> redisSendingProgressStatus = new HashMap<>();
       Map<Object, Object> redisCounselorStatusList = new HashMap<>();
       Map<String, Object> mapItem = new HashMap<>();
-
-      int[] arrCampaignId = null;
 
       //특정 캠페인이 아닌 경우
       if (_campaignId.indexOf(",") > -1 || _campaignId.equals("0")) {
@@ -448,11 +446,6 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
 
         bodyMap.clear();
         filterMap.clear();
-
-        arrCampaignId = Arrays.stream(_campaignId.split(","))
-                                      .mapToInt(Integer::parseInt)
-                                      .toArray();
-        int i = 0;
 
         //로그인 상담사 테넌트ID에 따른 캠페인에 할당된 상담원 가져오기
         // for (Map<String, Object> mapCampaign : mapCampaignList) {
@@ -559,7 +552,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
               strStateCode = jsonObjCounselorStateData.get("state").toString();
 
               //203(휴식), 204(대기), 205(처리), 206(후처리)
-              if (strStateCode.equals("204")) {
+              if (strStateCode.equals("204") && 
+                  ( _agentIds == null || _agentIds.length == 0 || Arrays.asList(_agentIds).contains(jsonObjCounselorState.get("EMPLOYEE").toString()) ) ) {
                 waitingCounselorCnt += 1 ;
                 // break;
               }
