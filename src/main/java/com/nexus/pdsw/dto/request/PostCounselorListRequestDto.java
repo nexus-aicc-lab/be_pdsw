@@ -26,5 +26,6 @@ public class PostCounselorListRequestDto {
   private String tenantId;    //선택 테넌트ID("0"이면 센터에서 상담원 상태 모니터 호출 시이며 센터 내 모든 캠페인에 할당된 모든 상담원이 대상)
   private String campaignId;  //선택 캠페인ID("0"이면 테넌트에서 상담원 상태 모니터 호출 시이며 테넌트 내 모든 캠페인에 할당된 모든 상담원이 대상)
   private String sessionKey;
+  private String[] agentIds; 
   
 }

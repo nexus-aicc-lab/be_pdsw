@@ -125,6 +125,8 @@ public class CounselorServiceImpl implements CounselorService {
 
       String strCounselorId = "";
       String strStateCode = "";
+      String[] _agentIds = requestBody.getAgentIds();
+      int[] arrTenantId = null;
 
       Map<String, Object> mapCounselorState = new HashMap<>();
 
@@ -143,332 +145,12 @@ public class CounselorServiceImpl implements CounselorService {
         return PostCounselorStatusListResponseDto.notExistSessionKey();
       }
 
-      Map<Object, Object> redisTenantList = hashOperations.entries("master.tenant-1");
+      if( _agentIds.length > 0 
+        && !requestBody.getTenantId().equals("A") && requestBody.getTenantId().indexOf(',') == -1 ) {
 
-      //WebClient로 API서버와 연결
-      WebClient webClient =
-        WebClient
-          .builder()
-          .baseUrl(baseUrl)
-          .defaultHeaders(httpHeaders -> {
-            httpHeaders.add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-            httpHeaders.add("Session-Key", requestBody.getSessionKey());
-          })
-          .build();
+        for (Object assignedCounselor : _agentIds){
 
-      //API 호출 시 Request 개체 자료구조
-      Map<String, Object> bodyMap = new HashMap<>();
-      Map<String, Object> filterMap = new HashMap<>();
-
-      int[] arrCampaignId = null;
-
-      List<Object> assignedCounselorList = new ArrayList<>();
-
-      //사이드 바(캠페인)에서 캠페인 노드에서 상담원 상태 모니터를 호출했을 때
-      if (!requestBody.getCampaignId().equals("0")) {
-        arrCampaignId = new int[1];
-        arrCampaignId[0] = Integer.parseInt(requestBody.getCampaignId());
-
-        filterMap.put("campaign_id", arrCampaignId);
-        bodyMap.put("filter", filterMap);
-
-        try {
-          //캠페인에 할당된 상담원 가져오기 API 요청
-          Map<String, Object> apiAssignedCounselor =
-            webClient
-              .post()
-              .uri(uriBuilder ->
-                uriBuilder
-                  .path("/pds/collections/campaign-agent")
-                  .build()
-              )
-              .bodyValue(bodyMap)
-              .retrieve()
-              .bodyToMono(Map.class)
-              .block();
-  
-          //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
-          if (!apiAssignedCounselor.get("result_code").equals(0)) {
-            String resultCode = "";
-            String resultMessage = "";
-            if (apiAssignedCounselor.get("result_code") != null) {
-              resultCode = apiAssignedCounselor.get("result_code").toString();
-            }
-            if (apiAssignedCounselor.get("result_message") != null) {
-              resultMessage = apiAssignedCounselor.get("result_message").toString();
-            }
-            ResponseDto result = new ResponseDto(resultCode, resultMessage);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-          }
-  
-          //캠페인에 할당된 상담원이 존재하면
-          if (apiAssignedCounselor.get("result_data") != null) {          
-            List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
-          
-            for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
-              assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
-            }
-          }
-          // log.info(">>>할당상담원: {}", assignedCounselorList.toString());
-          
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-  
-      } else {
-        int[] arrTenantId = null;
-        int i = 0;
-        List<Object> campaignList = new ArrayList<>();
-
-        if (requestBody.getTenantId().equals("A")) {
-          arrTenantId = new int[redisTenantList.size()];
-
-          for (Object tenantKey : redisTenantList.keySet()) {
-            arrTenantId[i] = Integer.parseInt(tenantKey.toString());
-            i++;
-          }
-
-          filterMap.put("tenant_id", arrTenantId);
-          bodyMap.put("filter", filterMap);
-
-          //센터 노드에서 호출했으면 전체 캠페인을 테넌트 노드에서 호출했으면 해당 테넌트의 캠페인을 가져오기 API 요청
-          Map<String, Object> apiCampaign =
-            webClient
-              .post()
-              .uri(uriBuilder ->
-                uriBuilder
-                  .path("/pds/collections/campaign-list")
-                  .build()
-              )
-              .bodyValue(bodyMap)
-              .retrieve()
-              .bodyToMono(Map.class)
-              .block();
-
-          //캠페인 가져오기 API 요청이 실패했을 때
-          if (!apiCampaign.get("result_code").equals(0)) {
-            String resultCode = "";
-            String resultMessage = "";
-            if (apiCampaign.get("result_code") != null) {
-              resultCode = apiCampaign.get("result_code").toString();
-            }
-            if (apiCampaign.get("result_message") != null) {
-              resultMessage = apiCampaign.get("result_message").toString();
-            }
-            ResponseDto result = new ResponseDto(resultCode, resultMessage);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-          }
-
-          List<Map<String, Object>> mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");
-          for (Map<String, Object> mapCampaign : mapCampaignList) {
-            campaignList.add((Object) mapCampaign.get("campaign_id"));
-          }
-
-          // for (Object tenantKey : redisTenantList.keySet()) {
-          //   arrTenantId[0] = Integer.parseInt(tenantKey.toString());
-          //   filterMap.put("tenant_id", arrTenantId);
-
-          //   // log.info(">>>테넌트ID: {}", filterMap.toString());
-    
-          //   bodyMap.put("filter", filterMap);
-
-          //   //센터 노드에서 호출했으면 전체 캠페인을 테넌트 노드에서 호출했으면 해당 테넌트의 캠페인을 가져오기 API 요청
-          //   Map<String, Object> apiCampaign =
-          //     webClient
-          //       .post()
-          //       .uri(uriBuilder ->
-          //         uriBuilder
-          //           .path("/pds/collections/campaign-list")
-          //           .build()
-          //       )
-          //       .bodyValue(bodyMap)
-          //       .retrieve()
-          //       .bodyToMono(Map.class)
-          //       .block();
-
-          //   //캠페인 가져오기 API 요청이 실패했을 때
-          //   if (!apiCampaign.get("result_code").equals(0)) {
-          //     String resultCode = "";
-          //     String resultMessage = "";
-          //     if (apiCampaign.get("result_code") != null) {
-          //       resultCode = apiCampaign.get("result_code").toString();
-          //     }
-          //     if (apiCampaign.get("result_message") != null) {
-          //       resultMessage = apiCampaign.get("result_message").toString();
-          //     }
-          //     ResponseDto result = new ResponseDto(resultCode, resultMessage);
-          //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-          //   }
-
-          //   List<Map<String, Object>> mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");
-
-          //   for (Map<String, Object> mapCampaign : mapCampaignList) {
-          //     campaignList.add((Object) mapCampaign.get("campaign_id"));
-          //   }
-    
-          // }        
-        } else {
-
-          if (!requestBody.getTenantId().chars().allMatch(Character::isDigit)) {
-            return PostCounselorStatusListResponseDto.notExistCampaignId();        
-          }
-          
-          arrTenantId = new int[1];
-          arrTenantId[0] = Integer.parseInt(requestBody.getTenantId());
-          filterMap.put("tenant_id", arrTenantId);
-  
-          bodyMap.put("filter", filterMap);
-
-          //센터 노드에서 호출했으면 전체 캠페인을 테넌트 노드에서 호출했으면 해당 테넌트의 캠페인을 가져오기 API 요청
-          Map<String, Object> apiCampaign =
-            webClient
-              .post()
-              .uri(uriBuilder ->
-                uriBuilder
-                  .path("/pds/collections/campaign-list")
-                  .build()
-              )
-              .bodyValue(bodyMap)
-              .retrieve()
-              .bodyToMono(Map.class)
-              .block();
-
-          //캠페인 가져오기 API 요청이 실패했을 때
-          if (!apiCampaign.get("result_code").equals(0)) {
-            String resultCode = "";
-            String resultMessage = "";
-            if (apiCampaign.get("result_code") != null) {
-              resultCode = apiCampaign.get("result_code").toString();
-            }
-            if (apiCampaign.get("result_message") != null) {
-              resultMessage = apiCampaign.get("result_message").toString();
-            }
-            ResponseDto result = new ResponseDto(resultCode, resultMessage);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-          }
-
-          List<Map<String, Object>> mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");
-
-          // log.info(">>>소속 캠페인: {}", mapCampaignList.toString());
-
-          for (Map<String, Object> mapCampaign : mapCampaignList) {
-            // log.info(">>>캠페인 ID: {}", mapCampaign.get("campaign_id").toString());
-            campaignList.add((Object) mapCampaign.get("campaign_id"));
-          }
-
-        }
-
-        // log.info(">>>소속 캠페인: {}", campaignList.toString());
-
-        arrCampaignId = new int[campaignList.size()];
-        int j = 0;
-
-        //가져온 캠페인의 할당 상담원 가져오기
-        for (Object campaign : campaignList) {
-          arrCampaignId[j] = (int) campaign;
-          j++;
-        }
-
-        filterMap.put("campaign_id", arrCampaignId);
-        bodyMap.put("filter", filterMap);
-
-        //캠페인에 할당된 상담원 가져오기 API 요청
-        Map<String, Object> apiAssignedCounselor =
-          webClient
-            .post()
-            .uri(uriBuilder ->
-              uriBuilder
-                .path("/pds/collections/campaign-agent")
-                .build()
-            )
-            .bodyValue(bodyMap)
-            .retrieve()
-            .bodyToMono(Map.class)
-            .block();
-
-        //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
-        if (!apiAssignedCounselor.get("result_code").equals(0)) {
-          String resultCode = "";
-          String resultMessage = "";
-          if (apiAssignedCounselor.get("result_code") != null) {
-            resultCode = apiAssignedCounselor.get("result_code").toString();
-          }
-          if (apiAssignedCounselor.get("result_message") != null) {
-            resultMessage = apiAssignedCounselor.get("result_message").toString();
-          }
-          ResponseDto result = new ResponseDto(resultCode, resultMessage);
-          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-        }
-
-        //캠페인에 할당된 상담원이 존재하면
-        if (apiAssignedCounselor.get("result_data") != null) {            
-          List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
-
-          //할당된 상담원 리스트에 누적 추가
-          for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
-            assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
-          }
-        }
-
-        //가져온 캠페인의 할당 상담원 가져오기
-        // for (Object campaign : campaignList) {
-        //   bodyMap.clear();
-        //   filterMap.clear();
-        //   arrCampaignId[0] = (int) campaign;
-          
-        //   filterMap.put("campaign_id", arrCampaignId);
-        //   bodyMap.put("filter", filterMap);
-
-        //   //캠페인에 할당된 상담원 가져오기 API 요청
-        //   Map<String, Object> apiAssignedCounselor =
-        //     webClient
-        //       .post()
-        //       .uri(uriBuilder ->
-        //         uriBuilder
-        //           .path("/pds/collections/campaign-agent")
-        //           .build()
-        //       )
-        //       .bodyValue(bodyMap)
-        //       .retrieve()
-        //       .bodyToMono(Map.class)
-        //       .block();
-
-        //   //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
-        //   if (!apiAssignedCounselor.get("result_code").equals(0)) {
-        //     String resultCode = "";
-        //     String resultMessage = "";
-        //     if (apiAssignedCounselor.get("result_code") != null) {
-        //       resultCode = apiAssignedCounselor.get("result_code").toString();
-        //     }
-        //     if (apiAssignedCounselor.get("result_message") != null) {
-        //       resultMessage = apiAssignedCounselor.get("result_message").toString();
-        //     }
-        //     ResponseDto result = new ResponseDto(resultCode, resultMessage);
-        //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-        //   }
-
-        //   //캠페인에 할당된 상담원이 존재하면
-        //   if (apiAssignedCounselor.get("result_data") != null) {            
-        //     List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
-
-        //     //할당된 상담원 리스트에 누적 추가
-        //     for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
-        //       assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
-        //     }
-        //   }
-        // }
-      }
-
-      //수집된 할당된 상담사ID 중복제거
-      List<Object> assignedCounselorDuplicatesRemovedList = assignedCounselorList.stream().distinct().collect(Collectors.toList());
-
-      // log.info(">>>중복 제거 할당 상담사: {}", assignedCounselorDuplicatesRemovedList.toString());
-
-      for (Object assignedCounselor : assignedCounselorDuplicatesRemovedList){
-
-        for (Object tenantKey : redisTenantList.keySet()) {
-
-          redisKey = "st.employee.state-1-" + tenantKey;
+          redisKey = "st.employee.state-1-" + requestBody.getTenantId();
           redisCounselorStatusList = hashOperations.entries(redisKey);
 
           arrJsonCounselorState = (JSONArray) jsonParser.parse(redisCounselorStatusList.values().toString());
@@ -479,7 +161,7 @@ public class CounselorServiceImpl implements CounselorService {
 
             strCounselorId = jsonObjCounselorState.get("EMPLOYEE").toString();
 
-            if (assignedCounselor.toString().equals(strCounselorId)) {
+            if (assignedCounselor.equals(strCounselorId)) {
 
               JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
               strStateCode = jsonObjCounselorStateData.get("state").toString();
@@ -503,8 +185,418 @@ public class CounselorServiceImpl implements CounselorService {
             }
           }
         }
-      }
+      }else if( _agentIds.length > 0 ){
+        String[] tenantIdStrings = requestBody.getTenantId().split(",");
+        arrTenantId = new int[tenantIdStrings.length];
+        for (int i = 0; i < tenantIdStrings.length; i++) {
+          arrTenantId[i] = Integer.parseInt(tenantIdStrings[i].trim());
+        }
+        
+        for (Object assignedCounselor : _agentIds){
+
+          for (Object tenantKey : arrTenantId) {
+
+            redisKey = "st.employee.state-1-" + tenantKey;
+            redisCounselorStatusList = hashOperations.entries(redisKey);
+
+            arrJsonCounselorState = (JSONArray) jsonParser.parse(redisCounselorStatusList.values().toString());
+
+            for (Object jsonCounselorState : arrJsonCounselorState) {
+
+              JSONObject jsonObjCounselorState = (JSONObject) jsonCounselorState;
+
+              strCounselorId = jsonObjCounselorState.get("EMPLOYEE").toString();
+
+              if (assignedCounselor.toString().equals(strCounselorId)) {
+
+                JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
+                strStateCode = jsonObjCounselorStateData.get("state").toString();
+
+                //203(휴식), 204(대기), 205(처리), 206(후처리)
+                if (strStateCode.equals("203") || strStateCode.equals("204") ||
+                  strStateCode.equals("205") || strStateCode.equals("206")) {
+
+                  try {
+                    mapCounselorState = new ObjectMapper().readValue(jsonObjCounselorStateData.toString(), Map.class);
+                  } catch (JsonParseException e) {
+                    e.printStackTrace();
+                  } catch (JsonMappingException e) {
+                    e.printStackTrace();
+                  } catch (IOException e) {
+                    e.printStackTrace();
+                  }
+                  mapCounselorStatusList.add(mapCounselorState);
+                  break;
+                }
+              }
+            }
+          }
+        }       
+
+      }else{
+        Map<Object, Object> redisTenantList = hashOperations.entries("master.tenant-1");
+
+        //WebClient로 API서버와 연결
+        WebClient webClient =
+          WebClient
+            .builder()
+            .baseUrl(baseUrl)
+            .defaultHeaders(httpHeaders -> {
+              httpHeaders.add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+              httpHeaders.add("Session-Key", requestBody.getSessionKey());
+            })
+            .build();
+
+        //API 호출 시 Request 개체 자료구조
+        Map<String, Object> bodyMap = new HashMap<>();
+        Map<String, Object> filterMap = new HashMap<>();
+
+        int[] arrCampaignId = null;
+
+        List<Object> assignedCounselorList = new ArrayList<>();
+
+        //사이드 바(캠페인)에서 캠페인 노드에서 상담원 상태 모니터를 호출했을 때
+        if (!requestBody.getCampaignId().equals("0")) {
+          arrCampaignId = new int[1];
+          arrCampaignId[0] = Integer.parseInt(requestBody.getCampaignId());
+
+          filterMap.put("campaign_id", arrCampaignId);
+          bodyMap.put("filter", filterMap);
+
+          try {
+            //캠페인에 할당된 상담원 가져오기 API 요청
+            Map<String, Object> apiAssignedCounselor =
+              webClient
+                .post()
+                .uri(uriBuilder ->
+                  uriBuilder
+                    .path("/pds/collections/campaign-agent")
+                    .build()
+                )
+                .bodyValue(bodyMap)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+    
+            //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
+            if (!apiAssignedCounselor.get("result_code").equals(0)) {
+              String resultCode = "";
+              String resultMessage = "";
+              if (apiAssignedCounselor.get("result_code") != null) {
+                resultCode = apiAssignedCounselor.get("result_code").toString();
+              }
+              if (apiAssignedCounselor.get("result_message") != null) {
+                resultMessage = apiAssignedCounselor.get("result_message").toString();
+              }
+              ResponseDto result = new ResponseDto(resultCode, resultMessage);
+              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+            }
+    
+            //캠페인에 할당된 상담원이 존재하면
+            if (apiAssignedCounselor.get("result_data") != null) {          
+              List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
+            
+              for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
+                assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
+              }
+            }
+            // log.info(">>>할당상담원: {}", assignedCounselorList.toString());
+            
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+    
+        } else {
+          int i = 0;
+          List<Object> campaignList = new ArrayList<>();
+
+          if (requestBody.getTenantId().equals("A")) {
+            arrTenantId = new int[redisTenantList.size()];
+
+            for (Object tenantKey : redisTenantList.keySet()) {
+              arrTenantId[i] = Integer.parseInt(tenantKey.toString());
+              i++;
+            }
+
+            filterMap.put("tenant_id", arrTenantId);
+            bodyMap.put("filter", filterMap);
+
+            //센터 노드에서 호출했으면 전체 캠페인을 테넌트 노드에서 호출했으면 해당 테넌트의 캠페인을 가져오기 API 요청
+            Map<String, Object> apiCampaign =
+              webClient
+                .post()
+                .uri(uriBuilder ->
+                  uriBuilder
+                    .path("/pds/collections/campaign-list")
+                    .build()
+                )
+                .bodyValue(bodyMap)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+            //캠페인 가져오기 API 요청이 실패했을 때
+            if (!apiCampaign.get("result_code").equals(0)) {
+              String resultCode = "";
+              String resultMessage = "";
+              if (apiCampaign.get("result_code") != null) {
+                resultCode = apiCampaign.get("result_code").toString();
+              }
+              if (apiCampaign.get("result_message") != null) {
+                resultMessage = apiCampaign.get("result_message").toString();
+              }
+              ResponseDto result = new ResponseDto(resultCode, resultMessage);
+              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+            }
+
+            List<Map<String, Object>> mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");
+            for (Map<String, Object> mapCampaign : mapCampaignList) {
+              campaignList.add((Object) mapCampaign.get("campaign_id"));
+            }
+
+            // for (Object tenantKey : redisTenantList.keySet()) {
+            //   arrTenantId[0] = Integer.parseInt(tenantKey.toString());
+            //   filterMap.put("tenant_id", arrTenantId);
+
+            //   // log.info(">>>테넌트ID: {}", filterMap.toString());
       
+            //   bodyMap.put("filter", filterMap);
+
+            //   //센터 노드에서 호출했으면 전체 캠페인을 테넌트 노드에서 호출했으면 해당 테넌트의 캠페인을 가져오기 API 요청
+            //   Map<String, Object> apiCampaign =
+            //     webClient
+            //       .post()
+            //       .uri(uriBuilder ->
+            //         uriBuilder
+            //           .path("/pds/collections/campaign-list")
+            //           .build()
+            //       )
+            //       .bodyValue(bodyMap)
+            //       .retrieve()
+            //       .bodyToMono(Map.class)
+            //       .block();
+
+            //   //캠페인 가져오기 API 요청이 실패했을 때
+            //   if (!apiCampaign.get("result_code").equals(0)) {
+            //     String resultCode = "";
+            //     String resultMessage = "";
+            //     if (apiCampaign.get("result_code") != null) {
+            //       resultCode = apiCampaign.get("result_code").toString();
+            //     }
+            //     if (apiCampaign.get("result_message") != null) {
+            //       resultMessage = apiCampaign.get("result_message").toString();
+            //     }
+            //     ResponseDto result = new ResponseDto(resultCode, resultMessage);
+            //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+            //   }
+
+            //   List<Map<String, Object>> mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");
+
+            //   for (Map<String, Object> mapCampaign : mapCampaignList) {
+            //     campaignList.add((Object) mapCampaign.get("campaign_id"));
+            //   }
+      
+            // }        
+          } else {
+
+            if (!requestBody.getTenantId().chars().allMatch(Character::isDigit)) {
+              return PostCounselorStatusListResponseDto.notExistCampaignId();        
+            }
+            
+            arrTenantId = new int[1];
+            arrTenantId[0] = Integer.parseInt(requestBody.getTenantId());
+            filterMap.put("tenant_id", arrTenantId);
+    
+            bodyMap.put("filter", filterMap);
+
+            //센터 노드에서 호출했으면 전체 캠페인을 테넌트 노드에서 호출했으면 해당 테넌트의 캠페인을 가져오기 API 요청
+            Map<String, Object> apiCampaign =
+              webClient
+                .post()
+                .uri(uriBuilder ->
+                  uriBuilder
+                    .path("/pds/collections/campaign-list")
+                    .build()
+                )
+                .bodyValue(bodyMap)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+            //캠페인 가져오기 API 요청이 실패했을 때
+            if (!apiCampaign.get("result_code").equals(0)) {
+              String resultCode = "";
+              String resultMessage = "";
+              if (apiCampaign.get("result_code") != null) {
+                resultCode = apiCampaign.get("result_code").toString();
+              }
+              if (apiCampaign.get("result_message") != null) {
+                resultMessage = apiCampaign.get("result_message").toString();
+              }
+              ResponseDto result = new ResponseDto(resultCode, resultMessage);
+              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+            }
+
+            List<Map<String, Object>> mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");
+
+            // log.info(">>>소속 캠페인: {}", mapCampaignList.toString());
+
+            for (Map<String, Object> mapCampaign : mapCampaignList) {
+              // log.info(">>>캠페인 ID: {}", mapCampaign.get("campaign_id").toString());
+              campaignList.add((Object) mapCampaign.get("campaign_id"));
+            }
+
+          }
+
+          // log.info(">>>소속 캠페인: {}", campaignList.toString());
+
+          arrCampaignId = new int[campaignList.size()];
+          int j = 0;
+
+          //가져온 캠페인의 할당 상담원 가져오기
+          for (Object campaign : campaignList) {
+            arrCampaignId[j] = (int) campaign;
+            j++;
+          }
+
+          filterMap.put("campaign_id", arrCampaignId);
+          bodyMap.put("filter", filterMap);
+
+          //캠페인에 할당된 상담원 가져오기 API 요청
+          Map<String, Object> apiAssignedCounselor =
+            webClient
+              .post()
+              .uri(uriBuilder ->
+                uriBuilder
+                  .path("/pds/collections/campaign-agent")
+                  .build()
+              )
+              .bodyValue(bodyMap)
+              .retrieve()
+              .bodyToMono(Map.class)
+              .block();
+
+          //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
+          if (!apiAssignedCounselor.get("result_code").equals(0)) {
+            String resultCode = "";
+            String resultMessage = "";
+            if (apiAssignedCounselor.get("result_code") != null) {
+              resultCode = apiAssignedCounselor.get("result_code").toString();
+            }
+            if (apiAssignedCounselor.get("result_message") != null) {
+              resultMessage = apiAssignedCounselor.get("result_message").toString();
+            }
+            ResponseDto result = new ResponseDto(resultCode, resultMessage);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+          }
+
+          //캠페인에 할당된 상담원이 존재하면
+          if (apiAssignedCounselor.get("result_data") != null) {            
+            List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
+
+            //할당된 상담원 리스트에 누적 추가
+            for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
+              assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
+            }
+          }
+
+          //가져온 캠페인의 할당 상담원 가져오기
+          // for (Object campaign : campaignList) {
+          //   bodyMap.clear();
+          //   filterMap.clear();
+          //   arrCampaignId[0] = (int) campaign;
+            
+          //   filterMap.put("campaign_id", arrCampaignId);
+          //   bodyMap.put("filter", filterMap);
+
+          //   //캠페인에 할당된 상담원 가져오기 API 요청
+          //   Map<String, Object> apiAssignedCounselor =
+          //     webClient
+          //       .post()
+          //       .uri(uriBuilder ->
+          //         uriBuilder
+          //           .path("/pds/collections/campaign-agent")
+          //           .build()
+          //       )
+          //       .bodyValue(bodyMap)
+          //       .retrieve()
+          //       .bodyToMono(Map.class)
+          //       .block();
+
+          //   //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
+          //   if (!apiAssignedCounselor.get("result_code").equals(0)) {
+          //     String resultCode = "";
+          //     String resultMessage = "";
+          //     if (apiAssignedCounselor.get("result_code") != null) {
+          //       resultCode = apiAssignedCounselor.get("result_code").toString();
+          //     }
+          //     if (apiAssignedCounselor.get("result_message") != null) {
+          //       resultMessage = apiAssignedCounselor.get("result_message").toString();
+          //     }
+          //     ResponseDto result = new ResponseDto(resultCode, resultMessage);
+          //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+          //   }
+
+          //   //캠페인에 할당된 상담원이 존재하면
+          //   if (apiAssignedCounselor.get("result_data") != null) {            
+          //     List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
+
+          //     //할당된 상담원 리스트에 누적 추가
+          //     for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
+          //       assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
+          //     }
+          //   }
+          // }
+        }
+
+        //수집된 할당된 상담사ID 중복제거
+        List<Object> assignedCounselorDuplicatesRemovedList = assignedCounselorList.stream().distinct().collect(Collectors.toList());
+
+        // log.info(">>>중복 제거 할당 상담사: {}", assignedCounselorDuplicatesRemovedList.toString());
+
+        for (Object assignedCounselor : assignedCounselorDuplicatesRemovedList){
+
+          for (Object tenantKey : redisTenantList.keySet()) {
+
+            redisKey = "st.employee.state-1-" + tenantKey;
+            redisCounselorStatusList = hashOperations.entries(redisKey);
+
+            arrJsonCounselorState = (JSONArray) jsonParser.parse(redisCounselorStatusList.values().toString());
+
+            for (Object jsonCounselorState : arrJsonCounselorState) {
+
+              JSONObject jsonObjCounselorState = (JSONObject) jsonCounselorState;
+
+              strCounselorId = jsonObjCounselorState.get("EMPLOYEE").toString();
+
+              if (assignedCounselor.toString().equals(strCounselorId)) {
+
+                JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
+                strStateCode = jsonObjCounselorStateData.get("state").toString();
+
+                //203(휴식), 204(대기), 205(처리), 206(후처리)
+                if (strStateCode.equals("203") || strStateCode.equals("204") ||
+                  strStateCode.equals("205") || strStateCode.equals("206")) {
+
+                  try {
+                    mapCounselorState = new ObjectMapper().readValue(jsonObjCounselorStateData.toString(), Map.class);
+                  } catch (JsonParseException e) {
+                    e.printStackTrace();
+                  } catch (JsonMappingException e) {
+                    e.printStackTrace();
+                  } catch (IOException e) {
+                    e.printStackTrace();
+                  }
+                  mapCounselorStatusList.add(mapCounselorState);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+      }
+
     } catch (Exception e) {
       e.printStackTrace();
       ResponseDto.databaseError();
