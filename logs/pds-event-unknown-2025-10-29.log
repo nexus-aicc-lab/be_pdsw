@@ -1,0 +1,56 @@
+2025-10-29 16:52:13.591 [main] INFO  com.nexus.pdsw.PdswApplication - Starting PdswApplication using Java 17.0.12 with PID 31076 (C:\Temp\work\be_pdsw\be_pdsw\build\classes\java\main started by user in C:\Temp\work\be_pdsw\be_pdsw)
+2025-10-29 16:52:13.647 [main] DEBUG com.nexus.pdsw.PdswApplication - Running with Spring Boot v3.4.1, Spring v6.2.1
+2025-10-29 16:52:13.647 [main] INFO  com.nexus.pdsw.PdswApplication - No active profile set, falling back to 1 default profile: "default"
+2025-10-29 16:52:14.713 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-10-29 16:52:14.713 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-10-29 16:52:14.762 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 9 ms. Found 0 Redis repository interfaces.
+2025-10-29 16:52:15.125 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-10-29 16:52:15.127 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-10-29 16:52:15.414 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 275 ms. Found 4 JPA repository interfaces.
+2025-10-29 16:52:15.437 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-10-29 16:52:15.439 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-10-29 16:52:15.471 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.nexus.pdsw.repository.EnvironmentSettingRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-10-29 16:52:15.471 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.nexus.pdsw.repository.EventLogRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-10-29 16:52:15.471 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.nexus.pdsw.repository.MenuByRoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-10-29 16:52:15.471 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.nexus.pdsw.repository.RoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2025-10-29 16:52:15.471 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 32 ms. Found 0 Redis repository interfaces.
+2025-10-29 16:52:16.623 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 4000 (http)
+2025-10-29 16:52:16.649 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-4000"]
+2025-10-29 16:52:16.653 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-10-29 16:52:16.653 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.34]
+2025-10-29 16:52:16.797 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-10-29 16:52:16.797 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 3046 ms
+2025-10-29 16:52:17.165 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-10-29 16:52:17.276 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.4.Final
+2025-10-29 16:52:17.362 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-10-29 16:52:17.982 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-10-29 16:52:18.081 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-10-29 16:52:18.284 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.mariadb.jdbc.Connection@7ecb9e17
+2025-10-29 16:52:18.291 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-10-29 16:52:18.422 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 10.11.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-10-29 16:52:19.040 [main] WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.nexus.pdsw.entity.primaryKey.EnvironmentSettingPk
+2025-10-29 16:52:19.040 [main] WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.nexus.pdsw.entity.primaryKey.EnvironmentSettingPk
+2025-10-29 16:52:20.014 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-10-29 16:52:20.020 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-10-29 16:52:21.522 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-10-29 16:52:22.165 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-4000"]
+2025-10-29 16:52:22.192 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 4000 (http) with context path '/'
+2025-10-29 16:52:22.221 [main] INFO  com.nexus.pdsw.PdswApplication - Started PdswApplication in 9.641 seconds (process running for 10.594)
+2025-10-29 16:52:22.482 [http-nio-4000-exec-4] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-10-29 16:52:22.483 [http-nio-4000-exec-4] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-10-29 16:52:22.486 [http-nio-4000-exec-4] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2025-10-29 16:52:22.637 [http-nio-4000-exec-3] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[Connected!!]
+2025-10-29 16:52:22.637 [http-nio-4000-exec-2] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[Connected!!]
+2025-10-29 16:52:22.637 [http-nio-4000-exec-1] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[Connected!!]
+2025-10-29 16:52:22.637 [http-nio-4000-exec-6] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[Connected!!]
+2025-10-29 16:52:22.637 [http-nio-4000-exec-5] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[Connected!!]
+2025-10-29 16:52:22.637 [http-nio-4000-exec-4] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[Connected!!]
+2025-10-29 16:53:07.716 [redisMessageListener-2] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[com.nexus.pdsw.dto.object.NotificationDto@bd06407]
+2025-10-29 16:53:07.716 [redisMessageListener-1] INFO  c.n.p.s.impl.SseEmitterServiceImpl - send to client NEX21002_0:[com.nexus.pdsw.dto.object.NotificationDto@7bf0547c]
