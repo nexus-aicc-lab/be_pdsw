@@ -48,7 +48,8 @@ public class EventLogController {
     @RequestBody PostEventLogRequestDto requestBody,
     HttpServletRequest request
   ) {
-    String tenantId = requestBody.getTenantId()+"";
+    String tenantId = String.valueOf(requestBody.getTenantId());
+    System.setProperty("tenantId", tenantId);
     MDC.put("tenantId", tenantId);
     String clientIp = request.getHeader("X-Forwarded-For");
    if (clientIp == null || clientIp.length() == 0 || "unknown".equalsIgnoreCase(clientIp)) {
