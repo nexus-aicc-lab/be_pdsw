@@ -19,10 +19,10 @@
     <!-- 각 tenant에 대해 동적으로 appender 생성 -->
     <sift>
       <appender name="FILE-${tenant}" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH:-logs}/${tenant}/pds-event.log</file>
+        <file>${LOG_PATH:-logs}/pds-event-${tenant}.log</file>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-          <fileNamePattern>${LOG_PATH:-logs}/${tenant}/pds-event.%d{yyyy-MM-dd}.log</fileNamePattern>
+          <fileNamePattern>${LOG_PATH:-logs}/pds-event-${tenant}.%d{yyyy-MM-dd}.log</fileNamePattern>
           <maxHistory>30</maxHistory>
         </rollingPolicy>
 
