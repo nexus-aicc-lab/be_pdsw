@@ -42,7 +42,7 @@ cors:
 
 logging:
   file:
-    path: /usr/local/tomcat/logs
+    path: /var/log/nginx
   level:
     root: INFO
     com.nexus.pdsw: DEBUG
