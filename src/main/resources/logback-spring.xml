@@ -14,7 +14,7 @@
 
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- 로그 파일 이름 형식 (일 단위로 분리) -->
-      <fileNamePattern>${LOG_PATH:-logs}/pds-event-%X{tenantId}-%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>${LOG_PATH:-logs}/pds-event-${tenantId}-%d{yyyy-MM-dd}.log</fileNamePattern>
       <maxHistory>30</maxHistory>
     </rollingPolicy>
 
