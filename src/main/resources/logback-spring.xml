@@ -8,29 +8,19 @@
     </encoder>
   </appender>
 
-  <!-- 테넌트별 파일 로그 -->
-  <appender name="TENANT_FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
-    <!-- discriminator: MDC에서 tenant 키 사용 -->
-    <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
-      <key>tenant</key>
-      <defaultValue>default</defaultValue>
-    </discriminator>
+  <!-- 파일 저장 (일별 로그 파일 분리) -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH:-logs}/pds-event.log</file>
 
-    <!-- 각 tenant에 대해 동적으로 appender 생성 -->
-    <sift>
-      <appender name="FILE-${tenant}" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH:-/var/log/nginx}/pds-event-${tenant}.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- 로그 파일 이름 형식 (일 단위로 분리) -->
+      <fileNamePattern>${LOG_PATH:-logs}/pds-event.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
 
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-          <fileNamePattern>${LOG_PATH:-/var/log/nginx}/pds-event-${tenant}.%d{yyyy-MM-dd}.log</fileNamePattern>
-          <maxHistory>30</maxHistory>
-        </rollingPolicy>
-
-        <encoder>
-          <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{tenant}] %logger{36} - %msg%n</pattern>
-        </encoder>
-      </appender>
-    </sift>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
   </appender>
 
   <!-- 루트 로그 설정 -->

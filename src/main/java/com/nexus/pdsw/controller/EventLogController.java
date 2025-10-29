@@ -49,6 +49,7 @@ public class EventLogController {
     HttpServletRequest request
   ) {
     String tenantId = requestBody.getTenantId()+"";
+    MDC.put("tenantId", tenantId);
     String clientIp = request.getHeader("X-Forwarded-For");
    if (clientIp == null || clientIp.length() == 0 || "unknown".equalsIgnoreCase(clientIp)) {
       clientIp = request.getHeader("Proxy-Client-IP");
@@ -76,8 +77,6 @@ public class EventLogController {
     }
     
     try {
-      // MDC에 테넌트 정보 저장
-      MDC.put("tenant", tenantId);
 
       log.info("이벤트 로그 요청 수신 - 테넌트: {}, 클라이언트IP: {}, 제목: {}, 내용: {}", tenantId, clientIp, requestBody.getActivation(), requestBody.getDescription());
 
