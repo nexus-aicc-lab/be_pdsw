@@ -26,7 +26,6 @@ import com.nexus.pdsw.service.EventLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 
 @Slf4j
 @RequestMapping("/api_upds/v1/log")
@@ -50,7 +49,6 @@ public class EventLogController {
   ) {
     String tenantId = String.valueOf(requestBody.getTenantId());
     System.setProperty("tenantId", tenantId);
-    MDC.put("tenantId", tenantId);
     String clientIp = request.getHeader("X-Forwarded-For");
    if (clientIp == null || clientIp.length() == 0 || "unknown".equalsIgnoreCase(clientIp)) {
       clientIp = request.getHeader("Proxy-Client-IP");
@@ -76,16 +74,8 @@ public class EventLogController {
     if (clientIp == null || clientIp.length() == 0 || "unknown".equalsIgnoreCase(clientIp)) {
       clientIp = request.getRemoteAddr();
     }
-    
-    try {
-
-      log.info("이벤트 로그 요청 수신 - 테넌트: {}, 클라이언트IP: {}, 제목: {}, 내용: {}", tenantId, clientIp, requestBody.getActivation(), requestBody.getDescription());
-
-      ResponseEntity<? super PostEventLogResponseDto> response = eventLogService.saveEventLog(requestBody, clientIp);
-      return response;
-    } finally {
-      // 반드시 정리 (스레드풀 재사용 문제 방지)
-      MDC.clear();
-    }
+    // logger.info("요청 처리됨 - 클라이언트 IP: {}, 처리내용: {}", clientIp, requestBody.getDescription());
+    ResponseEntity<? super PostEventLogResponseDto> response = eventLogService.saveEventLog(requestBody, clientIp);
+    return response;
   }
 }
