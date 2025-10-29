@@ -39,3 +39,10 @@ cors:
   allowed-origins:
     - https://pdsw232.nexuscommunity.kr
     - http://localhost:3000
+
+logging:
+  file:
+    path: /usr/local/tomcat/logs
+  level:
+    root: INFO
+    com.nexus.pdsw: DEBUG
