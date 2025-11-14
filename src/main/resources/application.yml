@@ -38,6 +38,7 @@ sse:
 cors:
   allowed-origins:
     - https://pdsw232.nexuscommunity.kr
+    - http://10.10.30.228:8080
     - http://localhost:3000
 
 logging:
