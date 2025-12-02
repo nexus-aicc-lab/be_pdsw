@@ -39,6 +39,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.pdsw.dto.request.PostCounselorListRequestDto;
@@ -107,6 +108,7 @@ public class CounselorServiceImpl implements CounselorService {
    *  @return ResponseEntity<? super PostCounselorStatusListResponseDto>
    */
   @Override
+  @SuppressWarnings("unchecked")
   public ResponseEntity<? super PostCounselorStatusListResponseDto> getCounselorStatusList(
     PostCounselorListRequestDto requestBody
   ) {
@@ -549,77 +551,20 @@ public class CounselorServiceImpl implements CounselorService {
         return GetCounselorInfoListResponseDto.notExistSessionKey();        
       }
 
-      String _centerId = requestBody.getCenterId();
-      if (requestBody.getCenterId() == null || requestBody.getCenterId().trim().isEmpty()) {
-        _centerId = "1";       
-      }
-
-      //WebClient로 API서버와 연결
-      WebClient webClient =
-        WebClient
-          .builder()
-          .baseUrl(baseUrl)
-          .defaultHeaders(httpHeaders -> {
-            httpHeaders.add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-            httpHeaders.add("Session-Key", requestBody.getSessionKey());
-          })
-          .build();
-
-      Map<String, Object> bodyMap = new HashMap<>();        
-      Map<String, Object> filterMap = new HashMap<>();
-
-      int[] arrCampaignId = new int[1];
-      arrCampaignId[0] = Integer.parseInt(requestBody.getCampaignId());
-
-      filterMap.put("campaign_id", arrCampaignId);
-      bodyMap.put("filter", filterMap);
-
-      List<Object> assignedCounselorList = new ArrayList<>();
-
-      //캠페인에 할당된 상담원 가져오기 API 요청
-      Map<String, Object> apiAssignedCounselor =
-        webClient
-          .post()
-          .uri(uriBuilder ->
-            uriBuilder
-              .path("/pds/collections/campaign-agent")
-              .build()
-          )
-          .bodyValue(bodyMap)
-          .retrieve()
-          .bodyToMono(Map.class)
-          .block();
-
-      //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
-      if (!apiAssignedCounselor.get("result_code").equals(0)) {
-        String resultCode = "";
-        String resultMessage = "";
-        if (apiAssignedCounselor.get("result_code") != null) {
-          resultCode = apiAssignedCounselor.get("result_code").toString();
-        }
-        if (apiAssignedCounselor.get("result_message") != null) {
-          resultMessage = apiAssignedCounselor.get("result_message").toString();
-        }
-        ResponseDto result = new ResponseDto(resultCode, resultMessage);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-      }
-
       String redisKey = "";
       HashOperations<String, Object, Object> hashOperations = redisTemplate1.opsForHash();
       Map<Object, Object> redisCounselorList = new HashMap<>();
       JSONArray arrJson = new JSONArray();      
       JSONParser jsonParser = new JSONParser();
+      TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {};
 
-      //캠페인에 할당된 상담원이 존재하면
-      if (apiAssignedCounselor.get("result_data") != null) {          
-        List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
+      String _centerId = requestBody.getCenterId();
+      if (requestBody.getCenterId() == null || requestBody.getCenterId().trim().isEmpty()) {
+        _centerId = "1";       
+      }
 
-        for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
-          assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
-        }
-
-        //수집된 할당된 상담사ID 중복제거
-        List<Object> assignedCounselorDuplicatesRemovedList = assignedCounselorList.stream().distinct().collect(Collectors.toList());
+      String[] agentIds = requestBody.getAgentIds();
+      if( agentIds != null && agentIds.length > 0){
 
         redisKey = "master.employee-"+_centerId+"-" + requestBody.getTenantId();
         redisCounselorList = hashOperations.entries(redisKey);
@@ -627,7 +572,7 @@ public class CounselorServiceImpl implements CounselorService {
         arrJson = (JSONArray) jsonParser.parse(redisCounselorList.values().toString());
         Map<String, Object> mapItem = null;
   
-        for (Object mapAssignedCounselor : assignedCounselorDuplicatesRemovedList){
+        for (String mapAssignedCounselor : agentIds){
           for (Object jsonItem : arrJson) {
             JSONObject jsonObj = (JSONObject) jsonItem;
   
@@ -636,7 +581,8 @@ public class CounselorServiceImpl implements CounselorService {
               JSONObject jsonObjData = (JSONObject) jsonObj.get("Data");
   
               try {
-                mapItem = new ObjectMapper().readValue(jsonObjData.toString(), Map.class);
+                //mapItem = new ObjectMapper().readValue(jsonObjData.toString(), Map.class);
+                mapItem = new ObjectMapper().readValue(jsonObjData.toString(), mapType);
               } catch (JsonMappingException e) {
                 throw new RuntimeException(e);
               }
@@ -662,6 +608,7 @@ public class CounselorServiceImpl implements CounselorService {
    *  @return ResponseEntity<? super PostSkillAssignedCounselorListResponseDto>
    */
   @Override
+  @SuppressWarnings("unchecked")
   public ResponseEntity<? super PostSkillAssignedCounselorListResponseDto> getSillAssignedCounselorList(
     PostSkillAssignedCounselorListRequestDto requestBody
   ) {
@@ -755,6 +702,7 @@ public class CounselorServiceImpl implements CounselorService {
   
         arrJson = (JSONArray) jsonParser.parse(redisCounselorList.values().toString());
         Map<String, Object> mapItem = null;
+        TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {};
   
         for (Object mapSkillAssignedCounselor : assignedCounselorDuplicatesRemovedList){
           for (Object jsonItem : arrJson) {
@@ -765,7 +713,8 @@ public class CounselorServiceImpl implements CounselorService {
               JSONObject jsonObjData = (JSONObject) jsonObj.get("Data");
   
               try {
-                mapItem = new ObjectMapper().readValue(jsonObjData.toString(), Map.class);
+                // mapItem = new ObjectMapper().readValue(jsonObjData.toString(), Map.class);
+                mapItem = new ObjectMapper().readValue(jsonObjData.toString(), mapType);
               } catch (JsonMappingException e) {
                 throw new RuntimeException(e);
               }

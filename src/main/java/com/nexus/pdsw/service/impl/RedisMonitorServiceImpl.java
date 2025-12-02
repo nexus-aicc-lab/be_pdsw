@@ -32,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.pdsw.dto.request.PostAllProgressInfoRequestDto;
@@ -89,10 +90,12 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       Map<Object, Object> redisMonitorProcess = hashOperations.entries(redisKey);
       arrJsonMonitorProcess = (JSONArray) jsonParser.parse(redisMonitorProcess.values().toString());
       Map<String, Object> mapMonitorProcess = null;
+      TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {};
 
       for(Object jsonMonitorProcess : arrJsonMonitorProcess) {
         try {
-          mapMonitorProcess = new ObjectMapper().readValue(jsonMonitorProcess.toString(), Map.class);
+          // mapMonitorProcess = new ObjectMapper().readValue(jsonMonitorProcess.toString(), Map.class);
+          mapMonitorProcess = new ObjectMapper().readValue(jsonMonitorProcess.toString(), mapType);
         } catch (JsonMappingException e) {
           throw new RuntimeException(e);
         }
@@ -113,6 +116,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
    *  @return ResponseEntity<? super PostDialerChannelStatusInfoResponseDto>
    */
   @Override
+  @SuppressWarnings("unchecked")
   public ResponseEntity<? super PostDialerChannelStatusInfoResponseDto> getDialerChannelStatusInfo(
     PostDialerChannelStatusInfoRequestDto requestDto
   ) {
@@ -249,6 +253,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       String redisKey = "";
       Map<Object, Object> redisProgressInfo = new HashMap<>();
       Map<String, Object> mapItem = new HashMap<>();
+      TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {};
 
       //호출 하는 상담원의 테넌트 ID가 "0"이면
       if (tenantId.equals("0")) {
@@ -268,7 +273,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
         
           for(Object jsonItem : arrJson) {
             try {
-              mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              // mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              mapItem = new ObjectMapper().readValue(jsonItem.toString(), mapType);
             } catch (JsonMappingException e) {
               throw new RuntimeException(e);
             }
@@ -288,7 +294,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
 
         for(Object jsonItem : arrJson) {
           try {
-            mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+            // mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+            mapItem = new ObjectMapper().readValue(jsonItem.toString(), mapType);
           } catch (JsonMappingException e) {
             throw new RuntimeException(e);
           }
@@ -356,6 +363,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       Map<Object, Object> redisSendingProgressStatus = new HashMap<>();
       Map<Object, Object> redisCounselorStatusList = new HashMap<>();
       Map<String, Object> mapItem = new HashMap<>();
+      TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {};
 
       //특정 캠페인이 아닌 경우
       if (_campaignId.indexOf(",") > -1 || _campaignId.equals("0")) {
@@ -381,7 +389,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
   
             for(Object jsonItem : arrJson) {
               try {
-                mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+                // mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+                mapItem = new ObjectMapper().readValue(jsonItem.toString(), mapType);
               } catch (JsonMappingException e) {
                 throw new RuntimeException(e);
               }
@@ -406,7 +415,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
   
           for(Object jsonItem : arrJson) {
             try {
-              mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              // mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              mapItem = new ObjectMapper().readValue(jsonItem.toString(), mapType);
             } catch (JsonMappingException e) {
               throw new RuntimeException(e);
             }
@@ -418,88 +428,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
 
         }
 
-        //로그인 상담사 테넌트ID에 따른 캠페인 가져오기 API 요청
-        // Map<String, Object> apiCampaign =
-        //   webClient
-        //     .post()
-        //     .uri(uriBuilder ->
-        //       uriBuilder
-        //         .path("/pds/collections/campaign-list")
-        //         .build()
-        //     )
-        //     .bodyValue(bodyMap)
-        //     .retrieve()
-        //     .bodyToMono(Map.class)
-        //     .doOnError(WebClientResponseException.class, ex -> {
-        //       // 추가적인 로깅이나 예외 처리
-        //       log.error("WebClientResponseException: ", ex);
-        //     })
-        //     .block();
-
-        //로그인 상담사 테넌트ID에 따른 캠페인 가져오기 API 요청이 실패했을 때
-        // if (!apiCampaign.get("result_code").equals(0)) {
-        //   ResponseDto result = new ResponseDto(apiCampaign.get("result_code").toString(), apiCampaign.get("result_msg").toString());
-        //   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-        // }
-
-        // mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");_campaignId
-
         bodyMap.clear();
         filterMap.clear();
-
-        //로그인 상담사 테넌트ID에 따른 캠페인에 할당된 상담원 가져오기
-        // for (Map<String, Object> mapCampaign : mapCampaignList) {
-        //   arrCampaignId[i] = (int) mapCampaign.get("campaign_id");
-        //   i++;
-        // }
-
-        // filterMap.put("campaign_id", arrCampaignId);
-        // bodyMap.put("filter", filterMap);
-
-        // //WebClient로 API서버와 연결
-        // WebClient webClient =
-        //   WebClient
-        //     .builder()
-        //     .baseUrl(baseUrl)
-        //     .defaultHeaders(httpHeaders -> {
-        //       httpHeaders.add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-        //       httpHeaders.add("Session-Key", requestDto.getSessionKey());
-        //     })
-        //     .build();
-
-        // try {
-        //   //캠페인에 할당된 상담원 가져오기 API 요청
-        //   Map<String, Object> apiAssignedCounselor =
-        //     webClient
-        //       .post()
-        //       .uri(uriBuilder ->
-        //         uriBuilder
-        //           .path("/pds/collections/campaign-agent")
-        //           .build()
-        //       )
-        //       .bodyValue(bodyMap)
-        //       .retrieve()
-        //       .bodyToMono(Map.class)
-        //       .block();
-
-        //   //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
-        //   if (!apiAssignedCounselor.get("result_code").equals(0)) {
-        //     ResponseDto result = new ResponseDto(apiAssignedCounselor.get("result_code").toString(), apiAssignedCounselor.get("result_msg").toString());
-        //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-        //   }
-
-        //   //캠페인에 할당된 상담원이 존재하면
-        //   if (apiAssignedCounselor.get("result_data") != null) {             
-        //     List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
-
-        //     //할당된 상담원 리스트에 누적 추가
-        //     for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
-        //       assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
-        //     }
-        //   }            
-        // } catch (Exception e) {
-        //   e.printStackTrace();
-        // }
 
       //특정 캠페인인 경우
       } else {
@@ -513,7 +443,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
           
         for(Object jsonItem : arrJson) {
           try {
-            mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+            // mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+            mapItem = new ObjectMapper().readValue(jsonItem.toString(), mapType);
             if( mapItem.get("campaign_id").toString().equals(_campaignId) ){
               mapSendingProgressStatusList.add(mapItem);
             }
@@ -525,15 +456,6 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
         return GetSendingProgressStatusResponseDto.success(mapSendingProgressStatusList, waitingCounselorCnt, requestDto.getCampaignId());
       }
 
-      // log.info("mapSendingProgressStatusList : {}", mapSendingProgressStatusList.toString());
-
-      //수집된 할당된 상담사ID 중복제거
-      // List<Object> assignedCounselorDuplicatesRemovedList = requestDto.getAgentIds() != null ?
-      //   Arrays.stream(requestDto.getAgentIds()).distinct().collect(Collectors.toList()) : new ArrayList<>();
-      
-      
-      // for (Object assignedCounselor : assignedCounselorDuplicatesRemovedList){
-
         for (Object tenantKey : _tenantId.split(",")) {
 
           redisCounselorStatusList = hashOperations1.entries("st.employee.state-1-" + tenantKey);
@@ -544,10 +466,6 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
 
             JSONObject jsonObjCounselorState = (JSONObject) jsonCounselorState;
 
-            // strCounselorId = jsonObjCounselorState.get("EMPLOYEE").toString();
-
-            // if (assignedCounselor.toString().equals(strCounselorId)) {
-
               JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
               strStateCode = jsonObjCounselorStateData.get("state").toString();
 
@@ -555,12 +473,9 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
               if (strStateCode.equals("204") && 
                   ( _agentIds == null || _agentIds.length == 0 || Arrays.asList(_agentIds).contains(jsonObjCounselorState.get("EMPLOYEE").toString()) ) ) {
                 waitingCounselorCnt += 1 ;
-                // break;
               }
-            // }
           }
         }
-      // }
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -590,6 +505,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       Map<String, Object> mapItem = new HashMap<>();
       String tenantId = "";
       String campaignId = "";
+      TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {};
 
       try {
         int campaignListCnt = campaignList.size();
@@ -606,7 +522,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
         
           for(Object jsonItem : arrJson) {
             try {
-              mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              // mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              mapItem = new ObjectMapper().readValue(jsonItem.toString(), mapType);
               mapItem.put("campId", campaignId);
               mapItem.put("tenantId", tenantId);
             } catch (JsonMappingException e) {
