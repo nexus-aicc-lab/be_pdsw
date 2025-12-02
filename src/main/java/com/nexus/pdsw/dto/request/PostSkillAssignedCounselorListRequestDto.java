@@ -22,6 +22,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PostSkillAssignedCounselorListRequestDto {
 
+  private String centerId;    //센터ID
   private String tenantId;    //테넌트ID
   private Integer skillId;    //스킬ID
   private String sessionKey;

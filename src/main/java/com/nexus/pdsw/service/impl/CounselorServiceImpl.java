@@ -144,13 +144,18 @@ public class CounselorServiceImpl implements CounselorService {
       if (requestBody.getSessionKey() == null || requestBody.getSessionKey().trim().isEmpty()) {
         return PostCounselorStatusListResponseDto.notExistSessionKey();
       }
+      
+      String _centerId = requestBody.getCenterId();
+      if (requestBody.getCenterId() == null || requestBody.getCenterId().trim().isEmpty()) {
+        _centerId = "1";       
+      }
 
       if( _agentIds.length > 0 
         && !requestBody.getTenantId().equals("A") && requestBody.getTenantId().indexOf(',') == -1 ) {
 
         for (Object assignedCounselor : _agentIds){
 
-          redisKey = "st.employee.state-1-" + requestBody.getTenantId();
+          redisKey = "st.employee.state-"+ _centerId + "-" + requestBody.getTenantId();
           redisCounselorStatusList = hashOperations.entries(redisKey);
 
           arrJsonCounselorState = (JSONArray) jsonParser.parse(redisCounselorStatusList.values().toString());
@@ -196,7 +201,7 @@ public class CounselorServiceImpl implements CounselorService {
 
           for (Object tenantKey : arrTenantId) {
 
-            redisKey = "st.employee.state-1-" + tenantKey;
+            redisKey = "st.employee.state-"+_centerId+"-" + tenantKey;
             redisCounselorStatusList = hashOperations.entries(redisKey);
 
             arrJsonCounselorState = (JSONArray) jsonParser.parse(redisCounselorStatusList.values().toString());
@@ -234,7 +239,7 @@ public class CounselorServiceImpl implements CounselorService {
         }       
 
       }else{
-        Map<Object, Object> redisTenantList = hashOperations.entries("master.tenant-1");
+        Map<Object, Object> redisTenantList = hashOperations.entries("master.tenant-"+_centerId);
 
         //WebClient로 API서버와 연결
         WebClient webClient =
@@ -354,49 +359,6 @@ public class CounselorServiceImpl implements CounselorService {
               campaignList.add((Object) mapCampaign.get("campaign_id"));
             }
 
-            // for (Object tenantKey : redisTenantList.keySet()) {
-            //   arrTenantId[0] = Integer.parseInt(tenantKey.toString());
-            //   filterMap.put("tenant_id", arrTenantId);
-
-            //   // log.info(">>>테넌트ID: {}", filterMap.toString());
-      
-            //   bodyMap.put("filter", filterMap);
-
-            //   //센터 노드에서 호출했으면 전체 캠페인을 테넌트 노드에서 호출했으면 해당 테넌트의 캠페인을 가져오기 API 요청
-            //   Map<String, Object> apiCampaign =
-            //     webClient
-            //       .post()
-            //       .uri(uriBuilder ->
-            //         uriBuilder
-            //           .path("/pds/collections/campaign-list")
-            //           .build()
-            //       )
-            //       .bodyValue(bodyMap)
-            //       .retrieve()
-            //       .bodyToMono(Map.class)
-            //       .block();
-
-            //   //캠페인 가져오기 API 요청이 실패했을 때
-            //   if (!apiCampaign.get("result_code").equals(0)) {
-            //     String resultCode = "";
-            //     String resultMessage = "";
-            //     if (apiCampaign.get("result_code") != null) {
-            //       resultCode = apiCampaign.get("result_code").toString();
-            //     }
-            //     if (apiCampaign.get("result_message") != null) {
-            //       resultMessage = apiCampaign.get("result_message").toString();
-            //     }
-            //     ResponseDto result = new ResponseDto(resultCode, resultMessage);
-            //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-            //   }
-
-            //   List<Map<String, Object>> mapCampaignList = (List<Map<String, Object>>) apiCampaign.get("result_data");
-
-            //   for (Map<String, Object> mapCampaign : mapCampaignList) {
-            //     campaignList.add((Object) mapCampaign.get("campaign_id"));
-            //   }
-      
-            // }        
           } else {
 
             if (!requestBody.getTenantId().chars().allMatch(Character::isDigit)) {
@@ -500,53 +462,6 @@ public class CounselorServiceImpl implements CounselorService {
             }
           }
 
-          //가져온 캠페인의 할당 상담원 가져오기
-          // for (Object campaign : campaignList) {
-          //   bodyMap.clear();
-          //   filterMap.clear();
-          //   arrCampaignId[0] = (int) campaign;
-            
-          //   filterMap.put("campaign_id", arrCampaignId);
-          //   bodyMap.put("filter", filterMap);
-
-          //   //캠페인에 할당된 상담원 가져오기 API 요청
-          //   Map<String, Object> apiAssignedCounselor =
-          //     webClient
-          //       .post()
-          //       .uri(uriBuilder ->
-          //         uriBuilder
-          //           .path("/pds/collections/campaign-agent")
-          //           .build()
-          //       )
-          //       .bodyValue(bodyMap)
-          //       .retrieve()
-          //       .bodyToMono(Map.class)
-          //       .block();
-
-          //   //해당 캠페인에 할당된 상담원ID 가져오기 API 요청이 실패했을 때
-          //   if (!apiAssignedCounselor.get("result_code").equals(0)) {
-          //     String resultCode = "";
-          //     String resultMessage = "";
-          //     if (apiAssignedCounselor.get("result_code") != null) {
-          //       resultCode = apiAssignedCounselor.get("result_code").toString();
-          //     }
-          //     if (apiAssignedCounselor.get("result_message") != null) {
-          //       resultMessage = apiAssignedCounselor.get("result_message").toString();
-          //     }
-          //     ResponseDto result = new ResponseDto(resultCode, resultMessage);
-          //     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-          //   }
-
-          //   //캠페인에 할당된 상담원이 존재하면
-          //   if (apiAssignedCounselor.get("result_data") != null) {            
-          //     List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiAssignedCounselor.get("result_data");
-
-          //     //할당된 상담원 리스트에 누적 추가
-          //     for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
-          //       assignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
-          //     }
-          //   }
-          // }
         }
 
         //수집된 할당된 상담사ID 중복제거
@@ -558,7 +473,7 @@ public class CounselorServiceImpl implements CounselorService {
 
           for (Object tenantKey : redisTenantList.keySet()) {
 
-            redisKey = "st.employee.state-1-" + tenantKey;
+            redisKey = "st.employee.state-"+_centerId+"-" + tenantKey;
             redisCounselorStatusList = hashOperations.entries(redisKey);
 
             arrJsonCounselorState = (JSONArray) jsonParser.parse(redisCounselorStatusList.values().toString());
@@ -634,6 +549,11 @@ public class CounselorServiceImpl implements CounselorService {
         return GetCounselorInfoListResponseDto.notExistSessionKey();        
       }
 
+      String _centerId = requestBody.getCenterId();
+      if (requestBody.getCenterId() == null || requestBody.getCenterId().trim().isEmpty()) {
+        _centerId = "1";       
+      }
+
       //WebClient로 API서버와 연결
       WebClient webClient =
         WebClient
@@ -701,7 +621,7 @@ public class CounselorServiceImpl implements CounselorService {
         //수집된 할당된 상담사ID 중복제거
         List<Object> assignedCounselorDuplicatesRemovedList = assignedCounselorList.stream().distinct().collect(Collectors.toList());
 
-        redisKey = "master.employee-1-" + requestBody.getTenantId();
+        redisKey = "master.employee-"+_centerId+"-" + requestBody.getTenantId();
         redisCounselorList = hashOperations.entries(redisKey);
   
         arrJson = (JSONArray) jsonParser.parse(redisCounselorList.values().toString());
@@ -764,6 +684,11 @@ public class CounselorServiceImpl implements CounselorService {
         return PostSkillAssignedCounselorListResponseDto.notExistSessionKey();        
       }
 
+      String _centerId = requestBody.getCenterId();
+      if (requestBody.getCenterId() == null || requestBody.getCenterId().trim().isEmpty()) {
+        _centerId = "1";       
+      }
+      
       //WebClient로 API서버와 연결
       WebClient webClient =
         WebClient
@@ -825,7 +750,7 @@ public class CounselorServiceImpl implements CounselorService {
         //수집된 할당된 상담사ID 중복제거
         List<Object> assignedCounselorDuplicatesRemovedList = skillAssignedCounselorList.stream().distinct().collect(Collectors.toList());
 
-        redisKey = "master.employee-1-" + requestBody.getTenantId();
+        redisKey = "master.employee-"+_centerId+"-" + requestBody.getTenantId();
         redisCounselorList = hashOperations.entries(redisKey);
   
         arrJson = (JSONArray) jsonParser.parse(redisCounselorList.values().toString());
