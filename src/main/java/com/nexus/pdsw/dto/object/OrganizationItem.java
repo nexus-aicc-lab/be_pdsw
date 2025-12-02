@@ -15,15 +15,10 @@ package com.nexus.pdsw.dto.object;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.springframework.data.redis.core.RedisTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nexus.pdsw.dto.request.PostCounselorListRequestDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

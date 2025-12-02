@@ -13,8 +13,6 @@
  *------------------------------------------------------------------------------*/
 package com.nexus.pdsw.dto.request;
 
-import java.util.Date;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

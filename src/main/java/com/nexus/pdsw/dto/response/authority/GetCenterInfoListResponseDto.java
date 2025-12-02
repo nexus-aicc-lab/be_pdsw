@@ -21,11 +21,8 @@ import org.springframework.http.ResponseEntity;
 
 import com.nexus.pdsw.common.ResponseCode;
 import com.nexus.pdsw.common.ResponseMessage;
-import com.nexus.pdsw.dto.object.AvailableMenuItem;
-import com.nexus.pdsw.dto.object.CenterInfoItem;
 import com.nexus.pdsw.dto.object.CenterListItem;
 import com.nexus.pdsw.dto.response.ResponseDto;
-import com.nexus.pdsw.entity.MenuByRoleEntity;
 
 import lombok.Getter;
 
