@@ -44,6 +44,7 @@ public class SendingProgressStatusItem {
 	 * 
    *  @param Map<String, Object> mapSendingProgressStatus  발신진행상태
 	*/
+  @SuppressWarnings("unchecked")
   private SendingProgressStatusItem(
     Map<String, Object> mapSendingProgressStatus
   ) {

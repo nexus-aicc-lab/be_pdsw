@@ -90,6 +90,7 @@ public class CounselorItem {
    *  @param String teamId                                  팀ID
    *  @return List<CounselorItem>
    */
+  @SuppressWarnings("unchecked")
   public static List<CounselorItem> getCounselorList(
           RedisTemplate<String, Object> redisTemplate1,
           String baseUrl,
@@ -190,6 +191,7 @@ public class CounselorItem {
    *  @param String teamId                                  팀ID
    *  @return List<CounselorItem>
    */
+  @SuppressWarnings("unchecked")
   public static List<CounselorItem> getCounselorListLegacy(
           RedisTemplate<String, Object> redisTemplate1,
           String baseUrl,

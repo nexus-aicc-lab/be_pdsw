@@ -24,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import com.nexus.pdsw.common.ResponseCode;
 import com.nexus.pdsw.common.ResponseMessage;
 import com.nexus.pdsw.dto.object.OrganizationItem;
-import com.nexus.pdsw.dto.request.PostCounselorListRequestDto;
 import com.nexus.pdsw.dto.response.ResponseDto;
 
 import lombok.Getter;

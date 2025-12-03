@@ -21,7 +21,6 @@ import org.springframework.stereotype.Repository;
 import com.nexus.pdsw.entity.MenuByRoleEntity;
 import com.nexus.pdsw.entity.RoleEntity;
 
-@SuppressWarnings("null")
 @Repository
 public interface MenuByRoleRepository extends JpaRepository<MenuByRoleEntity, Long> {
   

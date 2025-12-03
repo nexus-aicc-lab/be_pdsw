@@ -19,7 +19,6 @@ import org.springframework.stereotype.Repository;
 import com.nexus.pdsw.entity.EnvironmentSettingEntity;
 import com.nexus.pdsw.entity.primaryKey.EnvironmentSettingPk;
 
-@SuppressWarnings("null")
 @Repository
 public interface EnvironmentSettingRepository extends JpaRepository<EnvironmentSettingEntity, EnvironmentSettingPk> {
   EnvironmentSettingEntity findByEmployeeId(String employeeId);

@@ -52,6 +52,7 @@ public class AssignedCounselorListItem {
    *  @param RedisTemplate<String, Object> redisTemplate1   레디스 개체
    *  @param Map<String, Object> mapCounselorInfo 반환할 상담사 정보
   */
+  @SuppressWarnings("unchecked")
   private AssignedCounselorListItem(
     RedisTemplate<String, Object> redisTemplate1,
     Map<String, Object> mapCounselorInfo
