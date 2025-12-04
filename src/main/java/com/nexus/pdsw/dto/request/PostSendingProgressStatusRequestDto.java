@@ -22,6 +22,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PostSendingProgressStatusRequestDto {
   
+  private String centerId;    // center ID
   private String tenantId;    //선택 테넌트ID("0"이면 전체 캠페인)
   private String campaignId;  //선택 캠페인ID("0"이면 전체 캠페인)
   private String[] agentIds;  //선택 캠페인ID("0"이면 전체 캠페인)

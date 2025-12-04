@@ -357,7 +357,11 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       String strStateCode = "";
       String _tenantId = requestDto.getTenantId();
       String _campaignId = requestDto.getCampaignId();
-      String[] _agentIds = requestDto.getAgentIds();
+      String _centerId = "1";
+      if (requestDto.getCenterId() != null && !requestDto.getCenterId().trim().isEmpty()) {
+        _centerId = requestDto.getCenterId();
+      }
+
       
       String redisKey = "";
       Map<Object, Object> redisSendingProgressStatus = new HashMap<>();
@@ -458,7 +462,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
 
         for (Object tenantKey : _tenantId.split(",")) {
 
-          redisCounselorStatusList = hashOperations1.entries("st.employee.state-1-" + tenantKey);
+          redisCounselorStatusList = hashOperations1.entries("st.employee.state-"+_centerId+"-" + tenantKey);
 
           arrJsonCounselorState = (JSONArray) jsonParser.parse(redisCounselorStatusList.values().toString());
 
@@ -470,8 +474,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
               strStateCode = jsonObjCounselorStateData.get("state").toString();
 
               //203(휴식), 204(대기), 205(처리), 206(후처리)
-              if (strStateCode.equals("204") && 
-                  ( _agentIds == null || _agentIds.length == 0 || Arrays.asList(_agentIds).contains(jsonObjCounselorState.get("EMPLOYEE").toString()) ) ) {
+              if (strStateCode.equals("204")) {
                 waitingCounselorCnt += 1 ;
               }
           }
