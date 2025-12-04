@@ -358,11 +358,10 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       String _tenantId = requestDto.getTenantId();
       String _campaignId = requestDto.getCampaignId();
       String[] _agentIds = requestDto.getAgentIds();
-      String _centerId = "1";
-      if (requestDto.getCenterId() != null && !requestDto.getCenterId().trim().isEmpty()) {
-        _centerId = requestDto.getCenterId();
+      String _centerId = requestDto.getCenterId();
+      if (requestDto.getCenterId() == null || requestDto.getCenterId().trim().isEmpty()) {
+        _centerId = "1";       
       }
-
       
       String redisKey = "";
       Map<Object, Object> redisSendingProgressStatus = new HashMap<>();
