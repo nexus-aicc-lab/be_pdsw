@@ -21,11 +21,32 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-     
-      - name: Debug secret
+    
+      - name: Test TCP connection
         run: |
-          echo "PORT = ${{ secrets.PDSW_PORT }}"
-          exit 0 
+          echo "Testing SSH port connectivity..."
+          nc -zv ${{ secrets.PDSW_UPDATE_HOST }} ${{ secrets.PDSW_PORT }}
+          echo "TCP test finished, exiting."
+          exit 0
+
+      - name: Test SSH login
+        run: |
+          echo "Testing SSH login..."
+          ssh -o StrictHostKeyChecking=no -o BatchMode=yes -vvv \
+              -p ${{ secrets.PDSW_PORT }} \
+              ${{ secrets.PDSW_USER }}@${{ secrets.PDSW_UPDATE_HOST }} \
+              "echo 'SSH login successful!'"
+          echo "SSH login test finished, exiting."
+          exit 0
+
+      - name: Test SCP
+        run: |
+          echo "Testing SCP..."
+          scp -v -P ${{ secrets.PDSW_PORT }} \
+              /dev/null \
+              ${{ secrets.PDSW_USER }}@${{ secrets.PDSW_UPDATE_HOST }}:/tmp/
+          echo "SCP test finished, exiting."
+          exit 0
       
       - name: JDK 17 버전 설치
         uses: actions/setup-java@v4
