@@ -131,12 +131,14 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       JSONArray arrJson = new JSONArray();
 
       //API 인증 세션키가 없이 호출하였을 때
-      if (requestDto.getSessionKey() == null || requestDto.getSessionKey().trim().isEmpty()) {
+      if (requestDto.getSessionKey() == null || requestDto.getSessionKey().trim().isEmpty()) {        
+        log.info("세션키 정보 매핑 확인: {} 세션키 정보", requestDto.getSessionKey());
         return PostDialerChannelStatusInfoResponseDto.notExistSessionKey();        
       }
+      String _deviceId = requestDto.getDeviceId();
       
       //전체 Device에 대한 채널상태
-      if (requestDto.getDeviceId().equals("0")) {        
+      if (_deviceId.equals("0")) {        
         // Map<String, Object> bodyMap = new HashMap<>();
         WebClient webClient =
           WebClient
@@ -191,10 +193,32 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
           e.printStackTrace();
         }
 
+      } else if( _deviceId.indexOf(",") > -1 ) {
+        //여러 Device에 대한 채널상태
+        String[] arrDeviceId = _deviceId.split(",");
+
+        for( String deviceId : arrDeviceId ){
+
+          redisKey = "monitor:dialer:" + deviceId + ":channel";
+
+          Map<Object, Object> redisDialerChannelStatus = hashOperations.entries(redisKey);
+          arrJson = (JSONArray) jsonParser.parse(redisDialerChannelStatus.values().toString());
+
+          Map<String, Object> mapItem = null;
+
+          for(Object jsonItem : arrJson) {
+            try {
+              mapItem = new ObjectMapper().readValue(jsonItem.toString(), Map.class);
+              mapItem.put("deviceId", deviceId);
+            } catch (JsonMappingException e) {
+              throw new RuntimeException(e);
+            }
+            mapDialerChannelStatusList.add(mapItem);
+          }
+        }
       //특정 Device에 대한 채널상태
       } else {
-
-        redisKey = "monitor:dialer:" + requestDto.getDeviceId() + ":channel";
+        redisKey = "monitor:dialer:" + _deviceId + ":channel";
 
         Map<Object, Object> redisDialerChannelStatus = hashOperations.entries(redisKey);
         arrJson = (JSONArray) jsonParser.parse(redisDialerChannelStatus.values().toString());
