@@ -9,6 +9,11 @@ spring:
     username: pdsw_app
     password: pdswDev136!
   jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
     generate-ddl: false
     hibernate:
       ddl-auto: none
@@ -47,3 +52,9 @@ logging:
   level:
     root: INFO
     com.nexus.pdsw: DEBUG
+    
+    # SQL 로그
+    org.hibernate.SQL: DEBUG
+
+    # SQL 파라미터 값까지 보고 싶을 때 (Hibernate 5.x)
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
