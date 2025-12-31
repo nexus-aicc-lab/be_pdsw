@@ -42,34 +42,23 @@ public class NotificationServiceImpl implements NotificationService {
   public SseEmitter subscribe(String tenantId, String counselorId) {
     String emitterKey = counselorId + "_" + tenantId;
 
+    // 기존 Emitter 삭제 후 생성
+    sseEmitterService.deleteEmitter(emitterKey);
+    // emitter 생성 + 생명주기 관리는 SseEmitterService에서만
     SseEmitter sseEmitter = sseEmitterService.createEmitter(emitterKey);
-    sseEmitterService.send("Connected!!", emitterKey, sseEmitter);
-    // log.info("생성된 Emitter={}", sseEmitter.toString());    
+    log.info("SSE Emitter created : {}", emitterKey);
 
+    // 연결 성공 이벤트 (초기 handshake)
+    try {
+      sseEmitter.send(SseEmitter.event()
+      .name("connect")
+      .data("connected"));
+    } catch (Exception e) {
+      log.info("Failed to send connect event: {}", emitterKey);
+    }
+
+    // Redis 구독
     redisMessageService.subscribe(tenantId, counselorId);
-
-    sseEmitter.onTimeout(() -> {
-      log.info("Server Sent Event timed out : emiterKey={}, emitter={}", emitterKey, sseEmitter.toString());
-      sseEmitter.complete();      
-    });
-    sseEmitter.onError(e -> {
-      log.info("Server Sent Event error occurred : emiterKey={}, message={}", emitterKey, e.getMessage());
-      sseEmitter.completeWithError(e);
-      sseEmitterService.deleteEmitter(emitterKey);
-    });
-    sseEmitter.onCompletion(() -> {
-      sseEmitterService.deleteEmitter(emitterKey);
-      log.info("disconnected by completed Server Sent Event : emiterKey={}, emitter={}", emitterKey, sseEmitter.toString());
-      // redisMessageService.removeSubscribe(tenantId);
-    });
-
-    // 클라이언트가 미수신한 Event 목록이 존재할 경우 전송하여 Event 유실을 예방    
-    // if (!lastEventId.isEmpty()) {
-    //   Map<String, Object> events = emitterRepository.findAllEventCacheStartWithId(String.valueOf(userId));
-    //   events.entrySet().stream()
-    //         .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
-    //         .forEach(entry -> sendToClient(emitter, entry.getKey(), entry.getValue()));
-    // }
 
     return sseEmitter;
   }

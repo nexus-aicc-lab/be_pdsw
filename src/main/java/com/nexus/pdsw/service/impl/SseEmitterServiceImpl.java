@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -39,6 +40,8 @@ public class SseEmitterServiceImpl implements SseEmitterService {
   @Value("${sse.timeout}")
   private Long timeout;
 
+  private static final Long TIMEOUT = 0L;
+
   /*
    *  SSE Emitter 생성
    *  
@@ -47,7 +50,41 @@ public class SseEmitterServiceImpl implements SseEmitterService {
    */
   @Override
   public SseEmitter createEmitter(String emitterKey) {
-    return sseEmitterRepository.save(emitterKey, new SseEmitter(timeout));
+    // return sseEmitterRepository.save(emitterKey, new SseEmitter(timeout));
+    // 기존 emitter 있으면 제거
+    sseEmitterRepository.deleteById(emitterKey);
+
+    SseEmitter emitter = new SseEmitter(TIMEOUT); // 무한타임아웃 설정
+
+    emitter.onCompletion(() -> {
+        log.info("SSE completed: {} {}", emitterKey, TIMEOUT);
+        sseEmitterRepository.deleteById(emitterKey);
+    });
+
+    // emitter.onTimeout(() -> {
+    //     log.info("SSE timeout: {} {}", emitterKey, timeout);
+    //     sseEmitterRepository.deleteById(emitterKey);
+    // });
+
+    emitter.onError((ex) -> {
+        log.warn("SSE error: {} - {}", emitterKey, ex.getMessage());
+        sseEmitterRepository.deleteById(emitterKey);
+    });
+
+    return sseEmitterRepository.save(emitterKey, emitter);
+  }
+
+  // 클라이언트로 Heartbeat 메시지 전송
+  @Scheduled(fixedRate = 30000)
+  public void sendHeartbeat() {
+    sseEmitterRepository.findAll().forEach((key, emitter) -> {
+        try {
+            emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
+        } catch (Exception e) {
+            log.warn("Heartbeat failed: {}", key);
+            sseEmitterRepository.deleteById(key);
+        }
+    });
   }
 
   /*
@@ -102,7 +139,7 @@ public class SseEmitterServiceImpl implements SseEmitterService {
         .reconnectTime(1000L)
       );
     } catch (IOException | IllegalStateException e) {
-      log.error("IOException | IllegalStateException is occurred. ", e);
+      log.info("IOException | IllegalStateException is occurred. ", e);
       sseEmitterRepository.deleteById(emitterKey);
     }
   }
