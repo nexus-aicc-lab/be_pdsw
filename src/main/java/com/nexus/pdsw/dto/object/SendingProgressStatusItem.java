@@ -67,13 +67,15 @@ public class SendingProgressStatusItem {
     this.dialResult = (int) mapSendingProgressStatus.get("dial_result");
 
     // log.info("customerName: {}", mapSendingProgressStatus.get("customer_name"));
-    this.customerName = (String) mapSendingProgressStatus.get("customer_name");
+    // 1. 이름 마스킹 처리
+    this.customerName = maskName((String) mapSendingProgressStatus.get("customer_name"));
+    
+    // 2. 전화번호 리스트 마스킹 처리
+    List<String> rawPhoneNumbers = (List<String>) mapSendingProgressStatus.get("phone_number");
+    this.phoneNumber = maskPhoneList(rawPhoneNumbers);
 
     // log.info("customerKey: {}", mapSendingProgressStatus.get("customer_key"));
     this.customerKey = (String) mapSendingProgressStatus.get("customer_key");
-
-    this.phoneNumber = (List<String>) mapSendingProgressStatus.get("phone_number");
-    // log.info("phoneNumber: {}", this.phoneNumber.toString());
 
     this.phoneDialCount = (List<Integer>) mapSendingProgressStatus.get("phone_dial_count");
     // log.info("phoneDialCount: {}", this.phoneDialCount.toString());
@@ -101,6 +103,42 @@ public class SendingProgressStatusItem {
     }
 
     return sendingProgressStatusList;
+  }
+  
+  
+  
+  //이름 마스킹 로직 (홍길동 -> 홍*동 / 이순신 -> 이*신)
+  private String maskName(String name) {
+      if (name == null || name.length() < 2) return name;
+      if (name.length() == 2) return name.substring(0, 1) + "*";
+      
+      return name.substring(0, 1) + "*".repeat(name.length() - 2) + name.substring(name.length() - 1);
+  }
+
+  // 전화번호 리스트 마스킹 로직 (01012345678 -> 010-****-5678)
+  private List<String> maskPhoneList(List<String> phoneNumbers) {
+      if (phoneNumbers == null) return new ArrayList<>();
+      List<String> maskedList = new ArrayList<>();
+      for (String phone : phoneNumbers) {
+          maskedList.add(maskPhoneNumber(phone));
+      }
+      return maskedList;
+  }
+
+  private String maskPhoneNumber(String phone) {
+      if (phone == null || phone.length() < 7) return phone;
+      
+      // 숫자가 아닌 문자 제거 (하이픈 등 제거 후 재구성)
+      String cleanPhone = phone.replaceAll("[^0-9]", "");
+      
+      if (cleanPhone.length() == 11) {
+          // 010-1234-5678 -> 010-****-5678
+          return cleanPhone.substring(0, 3) + "-****-" + cleanPhone.substring(7);
+      } else if (cleanPhone.length() == 10) {
+          // 02-123-4567 -> 02-***-4567 또는 지역번호 3자리 처리
+          return cleanPhone.substring(0, 3) + "-***-" + cleanPhone.substring(6);
+      }
+      return phone; // 형식이 맞지 않으면 원본 혹은 간단 처리
   }
 
 }

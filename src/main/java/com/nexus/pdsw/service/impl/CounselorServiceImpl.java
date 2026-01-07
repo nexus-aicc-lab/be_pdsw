@@ -127,6 +127,7 @@ public class CounselorServiceImpl implements CounselorService {
 
       String strCounselorId = "";
       String strStateCode = "";
+      String strBlendKind = ""; // 2025-01-07 인바운드, 아웃바운드 확인 추가 - rody
       String[] _agentIds = requestBody.getAgentIds();
       int[] arrTenantId = null;
 
@@ -172,10 +173,12 @@ public class CounselorServiceImpl implements CounselorService {
 
               JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
               strStateCode = jsonObjCounselorStateData.get("state").toString();
+              strBlendKind = jsonObjCounselorStateData.get("blend_kind").toString();
 
               //203(휴식), 204(대기), 205(처리), 206(후처리)
-              if (strStateCode.equals("203") || strStateCode.equals("204") ||
-                strStateCode.equals("205") || strStateCode.equals("206")) {
+              if ( (strStateCode.equals("203") || strStateCode.equals("204") ||
+                strStateCode.equals("205") || strStateCode.equals("206") ) && 
+            		  !"1".equals(strBlendKind) ) {
 
                 try {
                   mapCounselorState = new ObjectMapper().readValue(jsonObjCounselorStateData.toString(), Map.class);
@@ -218,10 +221,12 @@ public class CounselorServiceImpl implements CounselorService {
 
                 JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
                 strStateCode = jsonObjCounselorStateData.get("state").toString();
+                strBlendKind = jsonObjCounselorStateData.get("blend_kind").toString();
 
                 //203(휴식), 204(대기), 205(처리), 206(후처리)
-                if (strStateCode.equals("203") || strStateCode.equals("204") ||
-                  strStateCode.equals("205") || strStateCode.equals("206")) {
+                if ( (strStateCode.equals("203") || strStateCode.equals("204") ||
+                  strStateCode.equals("205") || strStateCode.equals("206") ) && 
+              		  !"1".equals(strBlendKind) ) {
 
                   try {
                     mapCounselorState = new ObjectMapper().readValue(jsonObjCounselorStateData.toString(), Map.class);
@@ -490,10 +495,12 @@ public class CounselorServiceImpl implements CounselorService {
 
                 JSONObject jsonObjCounselorStateData = (JSONObject) jsonObjCounselorState.get("Data");
                 strStateCode = jsonObjCounselorStateData.get("state").toString();
+                strBlendKind = jsonObjCounselorStateData.get("blend_kind").toString();
 
                 //203(휴식), 204(대기), 205(처리), 206(후처리)
-                if (strStateCode.equals("203") || strStateCode.equals("204") ||
-                  strStateCode.equals("205") || strStateCode.equals("206")) {
+                if ( (strStateCode.equals("203") || strStateCode.equals("204") ||
+                  strStateCode.equals("205") || strStateCode.equals("206") ) && 
+              		  !"1".equals(strBlendKind) ) {
 
                   try {
                     mapCounselorState = new ObjectMapper().readValue(jsonObjCounselorStateData.toString(), Map.class);
