@@ -347,6 +347,8 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
 
     List<Map<String, Object>> mapSendingProgressStatusList = new ArrayList<Map<String, Object>>();
     int waitingCounselorCnt = 0;
+    
+    boolean maskCheck = requestDto.getMaskInfo() == 1;
 
     try {
 
@@ -392,7 +394,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       Map<Object, Object> redisCounselorStatusList = new HashMap<>();
       Map<String, Object> mapItem = new HashMap<>();
       TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {};
-
+      
       //특정 캠페인이 아닌 경우
       if (_campaignId.indexOf(",") > -1 || _campaignId.equals("0")) {
 
@@ -481,7 +483,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
           }
         }
 
-        return GetSendingProgressStatusResponseDto.success(mapSendingProgressStatusList, waitingCounselorCnt, requestDto.getCampaignId());
+        return GetSendingProgressStatusResponseDto.success(mapSendingProgressStatusList, waitingCounselorCnt, requestDto.getCampaignId(), maskCheck);
       }
 
         for (Object tenantKey : _tenantId.split(",")) {
@@ -509,7 +511,7 @@ public class RedisMonitorServiceImpl implements RedisMonitorService {
       e.printStackTrace();
       ResponseDto.databaseError();
     }
-    return GetSendingProgressStatusResponseDto.success(mapSendingProgressStatusList, waitingCounselorCnt, requestDto.getCampaignId());
+    return GetSendingProgressStatusResponseDto.success(mapSendingProgressStatusList, waitingCounselorCnt, requestDto.getCampaignId(), maskCheck);
   }
   
   /*

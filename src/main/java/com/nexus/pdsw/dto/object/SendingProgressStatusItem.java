@@ -46,7 +46,8 @@ public class SendingProgressStatusItem {
 	*/
   @SuppressWarnings("unchecked")
   private SendingProgressStatusItem(
-    Map<String, Object> mapSendingProgressStatus
+    Map<String, Object> mapSendingProgressStatus,
+    boolean maskCheck
   ) {
 
     // log.info("mapSendingProgressStatus: {}", mapSendingProgressStatus.toString());
@@ -67,13 +68,19 @@ public class SendingProgressStatusItem {
     this.dialResult = (int) mapSendingProgressStatus.get("dial_result");
 
     // log.info("customerName: {}", mapSendingProgressStatus.get("customer_name"));
-    // 1. 이름 마스킹 처리
-    this.customerName = maskName((String) mapSendingProgressStatus.get("customer_name"));
     
-    // 2. 전화번호 리스트 마스킹 처리
-    List<String> rawPhoneNumbers = (List<String>) mapSendingProgressStatus.get("phone_number");
-    this.phoneNumber = maskPhoneList(rawPhoneNumbers);
-
+    // PDSWEB 환경설정 화면에서 설정된 마스킹 설정에 따라서 마스킹 처리여부 추가 (디폴트-마스킹) 2026.01.08 - rody 
+    if(maskCheck == false) {
+    	this.customerName = (String) mapSendingProgressStatus.get("customer_name");
+    	this.phoneNumber = (List<String>) mapSendingProgressStatus.get("phone_number");
+    }else {
+    	// 1. 이름 마스킹 처리
+    	this.customerName = maskName((String) mapSendingProgressStatus.get("customer_name"));
+    	// 2. 전화번호 리스트 마스킹 처리
+        List<String> rawPhoneNumbers = (List<String>) mapSendingProgressStatus.get("phone_number");
+        this.phoneNumber = maskPhoneList(rawPhoneNumbers);
+    }
+   
     // log.info("customerKey: {}", mapSendingProgressStatus.get("customer_key"));
     this.customerKey = (String) mapSendingProgressStatus.get("customer_key");
 
@@ -92,13 +99,14 @@ public class SendingProgressStatusItem {
 	 *  @return List<SendingProgressStatusItem> sendingProgressStatusList
 	*/
   public static List<SendingProgressStatusItem> getSendingProgressStatus(
-    List<Map<String, Object>> mapSendingProgressStatusList
+    List<Map<String, Object>> mapSendingProgressStatusList,
+    boolean maskCheck
   ) {
 
     List<SendingProgressStatusItem> sendingProgressStatusList = new ArrayList<>();
 
     for(Map<String, Object> mapSendingProgressStatus : mapSendingProgressStatusList) {
-      SendingProgressStatusItem mapSendingProgressStatusItem = new SendingProgressStatusItem(mapSendingProgressStatus);
+      SendingProgressStatusItem mapSendingProgressStatusItem = new SendingProgressStatusItem(mapSendingProgressStatus, maskCheck);
       sendingProgressStatusList.add(mapSendingProgressStatusItem);
     }
 

@@ -39,17 +39,19 @@ public class GetSendingProgressStatusResponseDto extends ResponseDto {
    *  @param List<Map<String, Object>> mapSendingProgressStatusList  발신진행상태 리스트
    *  @param int waitingCounselorCnt                                 대기상담원수
    *  @param String campaignId                                       캠페인ID
+   *  @param boolean maskCheck 											 고객명, 고객번호 마스킹 여부
    */
   private GetSendingProgressStatusResponseDto(
     List<Map<String, Object>> mapSendingProgressStatusList,
     int waitingCounselorCnt,
-    String campaignId
+    String campaignId,
+    boolean maskCheck
   ) {
 
     super(ResponseCode.SUCCESS, ResponseMessage.SUCCESS);
     this.waitingCounselorCnt = waitingCounselorCnt;
     this.campaignId = campaignId;
-    this.sendingProgressStatusList = SendingProgressStatusItem.getSendingProgressStatus(mapSendingProgressStatusList);
+    this.sendingProgressStatusList = SendingProgressStatusItem.getSendingProgressStatus(mapSendingProgressStatusList, maskCheck);
   }
 
   /*  
@@ -63,9 +65,10 @@ public class GetSendingProgressStatusResponseDto extends ResponseDto {
   public static ResponseEntity<GetSendingProgressStatusResponseDto> success(
     List<Map<String, Object>> mapSendingProgressStatusList,
     int waitingCounselorCnt,
-    String campaignId
+    String campaignId,
+    boolean maskCheck
   ) {
-    GetSendingProgressStatusResponseDto result = new GetSendingProgressStatusResponseDto(mapSendingProgressStatusList, waitingCounselorCnt, campaignId);
+    GetSendingProgressStatusResponseDto result = new GetSendingProgressStatusResponseDto(mapSendingProgressStatusList, waitingCounselorCnt, campaignId, maskCheck);
     return ResponseEntity.status(HttpStatus.OK).body(result);
   }
 

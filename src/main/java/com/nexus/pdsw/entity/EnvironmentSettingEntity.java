@@ -69,6 +69,9 @@ public class EnvironmentSettingEntity {
   private String dayOfWeekSetting;        //요일을 설정할 수 있습니다.
   @Column(name = "UPDATE_TIME")
   private LocalDateTime updateTime;       //최종수정일시
+  
+  @Column(name = "MASK_INFO")
+  private int maskInfo;       			  // 고객명, 고객번호 마스킹 처리여부 (디폴트 1 마스킹처리, 0 비마스킹)
 
 
   /*
@@ -91,6 +94,7 @@ public class EnvironmentSettingEntity {
     this.sendingWorkEndHours = "0000";
     this.dayOfWeekSetting = "f,f,f,f,f,f,f";
     this.updateTime = LocalDateTime.now();
+    this.maskInfo = 1;
   }
   
   /*
@@ -111,6 +115,7 @@ public class EnvironmentSettingEntity {
     this.sendingWorkEndHours = requestDto.getSendingWorkEndHours();
     this.dayOfWeekSetting = requestDto.getDayOfWeekSetting();
     this.updateTime = LocalDateTime.now();
+    this.maskInfo = requestDto.getMaskInfo();
 
   }
 }

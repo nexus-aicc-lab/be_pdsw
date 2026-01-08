@@ -57,7 +57,7 @@ public class SseEmitterServiceImpl implements SseEmitterService {
     SseEmitter emitter = new SseEmitter(TIMEOUT); // 무한타임아웃 설정
 
     emitter.onCompletion(() -> {
-        log.info("SSE completed: {} {}", emitterKey, TIMEOUT);
+        log.info("SSE 연결 성공: {} {}", emitterKey, TIMEOUT);
         sseEmitterRepository.deleteById(emitterKey);
     });
 
@@ -67,7 +67,7 @@ public class SseEmitterServiceImpl implements SseEmitterService {
     // });
 
     emitter.onError((ex) -> {
-        log.warn("SSE error: {} - {}", emitterKey, ex.getMessage());
+        log.warn("SSE 연결 에러: {} - {}", emitterKey, ex.getMessage());
         sseEmitterRepository.deleteById(emitterKey);
     });
 
@@ -81,7 +81,7 @@ public class SseEmitterServiceImpl implements SseEmitterService {
         try {
             emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
         } catch (Exception e) {
-            log.warn("Heartbeat failed: {}", key);
+            log.warn("SSE 연결 유지용 Heartbeat Send failed: {}, error: {}", key , e.getMessage());
             sseEmitterRepository.deleteById(key);
         }
     });
@@ -95,7 +95,8 @@ public class SseEmitterServiceImpl implements SseEmitterService {
    */
   @Override
   public void deleteEmitter(String emitterKey) {
-    sseEmitterRepository.deleteById(emitterKey);
+	  log.info("SSE 연결 제거 emitterKey : {}", emitterKey);
+	  sseEmitterRepository.deleteById(emitterKey);
   }
 
   /*
@@ -130,7 +131,8 @@ public class SseEmitterServiceImpl implements SseEmitterService {
   public void send(Object data, String emitterKey, SseEmitter sseEmitter) {
 
     try {
-      log.info("send to client {}:[{}]", emitterKey, data);
+      // log.info("send to client {}:[{}]", emitterKey, data);
+    // com.nexus.pdsw.dto.object.NotificationDto@13dc43f1
       // log.info("emitterValue {}", sseEmitter);
       sseEmitter.send(SseEmitter.event()
         .name("message")
@@ -138,9 +140,15 @@ public class SseEmitterServiceImpl implements SseEmitterService {
         .data(data, MediaType.APPLICATION_JSON)
         .reconnectTime(1000L)
       );
+      log.info("SSE 메시지 전송 성공 To: {}, Data: {}", emitterKey, data);
     } catch (IOException | IllegalStateException e) {
-      log.info("IOException | IllegalStateException is occurred. ", e);
-      sseEmitterRepository.deleteById(emitterKey);
+    	// 전송 실패 로그
+	    log.warn("[SSE-SEND] [FAIL] To: {}, Reason: {}", emitterKey, e.getMessage());
+	    sseEmitterRepository.deleteById(emitterKey);
+    } catch (Exception e) {
+    	// 기타 오류 로그
+	    log.error("[SSE-SEND] [UNKNOWN-ERROR] To: {}", emitterKey, e);
+	    sseEmitterRepository.deleteById(emitterKey);
     }
   }
 

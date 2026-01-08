@@ -37,15 +37,29 @@ public class RedisSubscriber implements MessageListener {
   
   @Override
   public void onMessage(Message message, @Nullable byte[] pattern) {
-    try {
+	  String channel = new String(message.getChannel());
+	  String body = new String(message.getBody()); // 원본 바디 보관 (에러 시 추적용)
 
-      String channel = new String(message.getChannel());
-
-      NotificationDto notificationDto = objectMapper.readValue(message.getBody(), NotificationDto.class);
-      sseEmitterService.sendNotificationToClient(channel, notificationDto);
-
-    } catch (IOException e) {
-      log.error("IOException is occurred. ", e);
-    }
+	  try {
+		  // REDIS 수신 로그
+		  log.info("REDIS [RECEIVE] Channel: {}, Payload: {}", channel, body);
+		
+		  // JSON 파싱
+		  NotificationDto notificationDto = objectMapper.readValue(body, NotificationDto.class);
+		  
+		  // SSE 전송 시도
+		  log.info("REDIS [SUCCESS] SSE로 수신메시지 전달 Channel: {}, data: {}", channel, notificationDto);
+		  
+		  sseEmitterService.sendNotificationToClient(channel, notificationDto);
+		
+	  } catch (IOException e) {
+		  // 파싱 에러 (JSON 형식이 맞지 않을 때)
+		  log.error("REDIS [ERROR] JSON Parsing Failed. Channel: {}, Body: {}, Error: {}", 
+		            channel, body, e.getMessage());
+	  } catch (Exception e) {
+		  // 기타 서비스 로직 에러 (SSE 전송 실패 등)
+		  log.error("REDIS [ERROR] Unexpected Exception. Channel: {}, Error: {}", 
+		            channel, e.getMessage(), e);
+	  } 
   }  
 }

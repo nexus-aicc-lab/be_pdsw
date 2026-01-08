@@ -27,4 +27,5 @@ public class PostSendingProgressStatusRequestDto {
   private String campaignId;  //선택 캠페인ID("0"이면 전체 캠페인)
   private String[] agentIds;  //선택 캠페인ID("0"이면 전체 캠페인)
   private String sessionKey;
+  private int maskInfo; 	  // 발신 진행 상태 조회 시 마스킹여부 
 }

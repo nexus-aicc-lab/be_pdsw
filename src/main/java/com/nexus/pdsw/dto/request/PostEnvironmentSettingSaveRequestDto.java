@@ -33,4 +33,5 @@ public class PostEnvironmentSettingSaveRequestDto {
   private String sendingWorkStartHours;   //발신업무시작시간
   private String sendingWorkEndHours;     //발신업무종료시간
   private String dayOfWeekSetting;        //요일을 설정할 수 있습니다.
+  private int maskInfo;					  // 고객명, 고객번호 마스킹 처리여부 (디폴트 1 마스킹처리, 0 비마스킹)
 }
