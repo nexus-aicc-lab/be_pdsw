@@ -20,9 +20,12 @@ package com.nexus.pdsw.service.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONArray;
@@ -59,15 +62,24 @@ public class CounselorServiceImpl implements CounselorService {
 
   @Qualifier("1")
   private final RedisTemplate<String, Object> redisTemplate1;
+  private final ObjectMapper objectMapper;
+  
 
   public CounselorServiceImpl(
-    @Qualifier("1") RedisTemplate<String, Object> redisTemplate1
+    @Qualifier("1") RedisTemplate<String, Object> redisTemplate1,
+    ObjectMapper objectMapper
   ) {
     this.redisTemplate1 = redisTemplate1;
+    this.objectMapper = objectMapper;
   }
 
   @Value("${restapi.baseurl}")
   private String baseUrl;
+  
+  //공통 상수 및 필터 조건
+  private static final List<String> VALID_STATES = Arrays.asList("203", "204", "205", "206");
+  
+  
 
   /*  
    *  상담사 리스트 가져오기
@@ -75,6 +87,7 @@ public class CounselorServiceImpl implements CounselorService {
    *  @param PostCounselorListRequestDto requestBody  상담사 리스트 전달 DTO
    *  @return ResponseEntity<? super GetCounselorListResponseDto>
    */
+  /*
   @Override
   public ResponseEntity<? super GetCounselorListResponseDto> getCounselorList(
     PostCounselorListRequestDto requestBody
@@ -100,6 +113,26 @@ public class CounselorServiceImpl implements CounselorService {
     }
     return GetCounselorListResponseDto.success(redisTemplate1, baseUrl, requestBody.getSessionKey(), requestBody.getTenantId(), arrJsonCenter);
   }
+  */
+  
+  /* * 1. 상담사 리스트 가져오기 최적화
+   * entries() 결과를 직접 Stream으로 처리하여 불필요한 String 변환/재파싱 제거
+   */
+  @Override
+  public ResponseEntity<? super GetCounselorListResponseDto> getCounselorList(PostCounselorListRequestDto requestBody) {
+      try {
+          Map<Object, Object> redisCenter = redisTemplate1.opsForHash().entries("master.center");
+          
+          JSONArray arrJsonCenter = new JSONArray();
+          JSONParser jsonParser = new JSONParser();
+          arrJsonCenter = (JSONArray) jsonParser.parse(redisCenter.values().toString());
+
+          return GetCounselorListResponseDto.success(redisTemplate1, baseUrl, requestBody.getSessionKey(), requestBody.getTenantId(), arrJsonCenter);
+      } catch (Exception e) {
+          log.error("getCounselorList Error", e);
+          return ResponseDto.databaseError();
+      }
+  }
 
   /*
    *  상담사 상태정보 가져오기
@@ -107,6 +140,7 @@ public class CounselorServiceImpl implements CounselorService {
    *  @param PostCounselorListRequestDto requestBody    전달 DTO
    *  @return ResponseEntity<? super PostCounselorStatusListResponseDto>
    */
+  /*
   @Override
   @SuppressWarnings("unchecked")
   public ResponseEntity<? super PostCounselorStatusListResponseDto> getCounselorStatusList(
@@ -527,6 +561,7 @@ public class CounselorServiceImpl implements CounselorService {
     }
     return PostCounselorStatusListResponseDto.success(mapCounselorStatusList);
   }
+  */
 
   /*
    *  캠페인 할당 상담사정보 가져오기
@@ -534,6 +569,7 @@ public class CounselorServiceImpl implements CounselorService {
    *  @param PostCounselorListRequestDto requestBody    전달 매개변수 개체 DTO
    *  @return ResponseEntity<? super GetCounselorInfoListResponseDto>
    */
+  /*
   @Override
   public ResponseEntity<? super GetCounselorInfoListResponseDto> getCounselorInfoList(
     PostCounselorListRequestDto requestBody
@@ -607,6 +643,7 @@ public class CounselorServiceImpl implements CounselorService {
 
     return GetCounselorInfoListResponseDto.success(redisTemplate1, mapCounselorInfoList);
   }
+  */
 
   /*
    *  스킬 할당 상담사정보 가져오기
@@ -614,6 +651,7 @@ public class CounselorServiceImpl implements CounselorService {
    *  @param PostSkillAssignedCounselorListRequestDto requestBody    전달 매개변수 개체 DTO
    *  @return ResponseEntity<? super PostSkillAssignedCounselorListResponseDto>
    */
+  
   @Override
   @SuppressWarnings("unchecked")
   public ResponseEntity<? super PostSkillAssignedCounselorListResponseDto> getSillAssignedCounselorList(
@@ -739,5 +777,121 @@ public class CounselorServiceImpl implements CounselorService {
 
     return PostSkillAssignedCounselorListResponseDto.success(redisTemplate1, mapSkillAssignedCounselorList);
   }
+  
+  
+  /*
+   * 2. 상담사 상태정보 가져오기 최적화 (가장 속도가 느렸던 부분)
+   * 핵심: 루프 안에서 Redis 호출 금지 + Map을 활용한 O(1) 매칭
+   */
+  @Override
+  public ResponseEntity<? super PostCounselorStatusListResponseDto> getCounselorStatusList(PostCounselorListRequestDto requestBody) {
+      try {
+          // 유효성 검사 로직 통합
+          if (isStringEmpty(requestBody.getTenantId())) return PostCounselorStatusListResponseDto.notExistTenantId();
+          if (isStringEmpty(requestBody.getCampaignId())) return PostCounselorStatusListResponseDto.notExistCampaignId();
+          if (isStringEmpty(requestBody.getSessionKey())) return PostCounselorStatusListResponseDto.notExistSessionKey();
+
+          String centerId = (requestBody.getCenterId() == null) ? "1" : requestBody.getCenterId();
+          String[] agentIds = requestBody.getAgentIds();
+          List<String> targetTenants = getTargetTenants(requestBody, centerId);
+
+          // 모든 대상 테넌트의 Redis 데이터를 한 번에 수집 (N+1 문제 해결)
+          Map<String, Map<String, Object>> allAgentsStatusMap = new HashMap<>();
+          for (String tenant : targetTenants) {
+              String redisKey = "st.employee.state-" + centerId + "-" + tenant;
+              Map<Object, Object> tenantData = redisTemplate1.opsForHash().entries(redisKey);
+              
+              tenantData.forEach((key, value) -> {
+                  Map<String, Object> statusMap = parseJsonToMap(value);
+                  if (statusMap.containsKey("Data")) {
+                      Map<String, Object> dataField = (Map<String, Object>) statusMap.get("Data");
+                      allAgentsStatusMap.put(String.valueOf(statusMap.get("EMPLOYEE")), dataField);
+                  }
+              });
+          }
+
+          // 필터링 및 결과 생성 (Map 탐색으로 O(1) 달성)
+          List<Map<String, Object>> resultList = new ArrayList<>();
+          for (String targetId : agentIds) {
+              Map<String, Object> agentStatus = allAgentsStatusMap.get(targetId);
+              if (agentStatus != null && isAgentInValidState(agentStatus)) {
+                  resultList.add(agentStatus);
+              }
+          }
+
+          return PostCounselorStatusListResponseDto.success(resultList);
+      } catch (Exception e) {
+          log.error("getCounselorStatusList Error", e);
+          return ResponseDto.databaseError();
+      }
+  }
+
+  /*
+   * 3. 캠페인 할당 상담사정보 가져오기 최적화
+   */
+  @Override
+  public ResponseEntity<? super GetCounselorInfoListResponseDto> getCounselorInfoList(PostCounselorListRequestDto requestBody) {
+      try {
+          if (isStringEmpty(requestBody.getTenantId())) return GetCounselorInfoListResponseDto.notExistTenantId();
+          
+          String centerId = (requestBody.getCenterId() == null) ? "1" : requestBody.getCenterId();
+          String redisKey = "master.employee-" + centerId + "-" + requestBody.getTenantId();
+          
+          // 테넌트 전체 상담사 정보를 Map으로 한 번에 로드 (ID를 Key로 사용)
+          Map<Object, Object> allEmployees = redisTemplate1.opsForHash().entries(redisKey);
+          Map<String, Map<String, Object>> employeeLookupMap = new HashMap<>();
+          
+          allEmployees.values().forEach(val -> {
+              Map<String, Object> emp = parseJsonToMap(val);
+              if (emp.containsKey("EMPLOYEE") && emp.containsKey("Data")) {
+                  employeeLookupMap.put(emp.get("EMPLOYEE").toString(), (Map<String, Object>) emp.get("Data"));
+              }
+          });
+
+          List<Map<String, Object>> resultList = Arrays.stream(requestBody.getAgentIds())
+              .map(employeeLookupMap::get)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList());
+
+          return GetCounselorInfoListResponseDto.success(redisTemplate1, resultList);
+      } catch (Exception e) {
+          log.error("getCounselorInfoList Error", e);
+          return ResponseDto.databaseError();
+      }
+  }
+
+  // --- 내부 헬퍼 메서드 (중복 제거 및 가독성) ---
+
+  private Map<String, Object> parseJsonToMap(Object obj) {
+      if (obj == null) return Collections.emptyMap();
+      try {
+          // Redis에 저장된 형식이 String이면 readValue, Map이면 직접 변환
+          if (obj instanceof String) {
+              return objectMapper.readValue((String) obj, new TypeReference<Map<String, Object>>() {});
+          }
+          return objectMapper.convertValue(obj, new TypeReference<Map<String, Object>>() {});
+      } catch (Exception e) {
+          return Collections.emptyMap();
+      }
+  }
+
+  private boolean isAgentInValidState(Map<String, Object> data) {
+      String state = String.valueOf(data.getOrDefault("state", ""));
+      String blendKind = String.valueOf(data.getOrDefault("blend_kind", ""));
+      return VALID_STATES.contains(state) && !"1".equals(blendKind);
+  }
+
+  private boolean isStringEmpty(String str) {
+      return str == null || str.trim().isEmpty();
+  }
+
+  private List<String> getTargetTenants(PostCounselorListRequestDto body, String centerId) {
+      if ("A".equals(body.getTenantId())) {
+          Map<Object, Object> tenants = redisTemplate1.opsForHash().entries("master.tenant-" + centerId);
+          return tenants.keySet().stream().map(Object::toString).collect(Collectors.toList());
+      }
+      return Arrays.asList(body.getTenantId().split(","));
+  }
+
 
 }
