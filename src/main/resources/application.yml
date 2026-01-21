@@ -30,8 +30,8 @@ spring:
   #     request-timeout: 0
 
 restapi:
-  # baseurl: http://10.10.40.145:8010
   baseurl: http://10.10.30.180:8010
+  # baseurl: http://10.10.40.145:8010
 
 sse:
   timeout: 300000
