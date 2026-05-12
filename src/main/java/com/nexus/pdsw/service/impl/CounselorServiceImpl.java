@@ -758,7 +758,17 @@ public class CounselorServiceImpl implements CounselorService {
             JSONObject jsonObj = (JSONObject) jsonItem;
   
             //해당 테넌트에 소속된 상담사 중 대상 상담사의 ID와 동일하면
-            if (mapSkillAssignedCounselor.equals(jsonObj.get("EMPLOYEE"))) {
+            if (
+            		(
+            				mapSkillAssignedCounselor != null &&
+            				mapSkillAssignedCounselor.equals(jsonObj.get("EMPLOYEE"))  
+            		) || 
+            		(
+            			    mapSkillAssignedCounselor instanceof Number &&
+            			    jsonObj.get("EMPLOYEE") != null &&
+            			    mapSkillAssignedCounselor.toString().equals(jsonObj.get("EMPLOYEE").toString())
+            		)	
+            	) {
               JSONObject jsonObjData = (JSONObject) jsonObj.get("Data");
   
               try {
