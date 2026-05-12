@@ -730,10 +730,13 @@ public class CounselorServiceImpl implements CounselorService {
       Map<Object, Object> redisCounselorList = new HashMap<>();
       JSONArray arrJson = new JSONArray();      
       JSONParser jsonParser = new JSONParser();
+      int skillAgentResultDataCount = 0;
+      int assignedCounselorCount = 0;
 
       //스킬에 할당된 상담원이 존재하면
       if (apiSkillAssignedCounselor.get("result_data") != null) {
         List<Map<String, Object>> mapAssignedCounselorList = (List<Map<String, Object>>) apiSkillAssignedCounselor.get("result_data");
+        skillAgentResultDataCount = mapAssignedCounselorList.size();
 
         for (Map<String, Object> mapAssignedCounselor : mapAssignedCounselorList) {
           skillAssignedCounselorList.addAll((List<Object>) mapAssignedCounselor.get("agent_id"));
@@ -741,6 +744,7 @@ public class CounselorServiceImpl implements CounselorService {
 
         //수집된 할당된 상담사ID 중복제거
         List<Object> assignedCounselorDuplicatesRemovedList = skillAssignedCounselorList.stream().distinct().collect(Collectors.toList());
+        assignedCounselorCount = assignedCounselorDuplicatesRemovedList.size();
 
         redisKey = "master.employee-"+_centerId+"-" + requestBody.getTenantId();
         redisCounselorList = hashOperations.entries(redisKey);
@@ -769,6 +773,63 @@ public class CounselorServiceImpl implements CounselorService {
           }
         }
       }
+
+      
+      // com.nexus.pdsw.service.impl.CounselorServiceImpl: TRACE 
+      if (log.isTraceEnabled()) {
+    	  Object resultCode = apiSkillAssignedCounselor == null ? null : apiSkillAssignedCounselor.get("result_code");
+    	  int redisCounselorCount = redisCounselorList == null ? 0 : redisCounselorList.size();
+        int numericValueIdCount = 0;
+        int numericTypeIdCount = 0;
+        List<String> numericTypeIdSamples = new ArrayList<>();
+
+        if (skillAssignedCounselorList != null) {
+          for (Object counselorId : skillAssignedCounselorList) {
+            if (counselorId == null) {
+              continue;
+            }
+
+            if (counselorId.toString().trim().matches("\\d+")) {
+              numericValueIdCount++;
+            }
+
+            if (counselorId instanceof Number) {
+              numericTypeIdCount++;
+
+              if (numericTypeIdSamples.size() < 5) {
+                numericTypeIdSamples.add(counselorId + "(" + counselorId.getClass().getSimpleName() + ")");
+              }
+            }
+          }
+        }
+
+    	  log.trace(
+    	    "getSillAssignedCounselorList Debug 확인. centerId={}, "
+    	    + "tenantId={}, "
+    	    + "skillId={}, "
+    	    + "resultCode={}, "
+    	    + "skill-agent result_data 건수={}, "
+    	    + "skill-agent agent_id 상담사 건수={}, "
+    	    + "redisKey={}, "
+    	    + "Redis 상담사 건수={}, "
+    	    + "Redis 매칭 상담사 건수={}, "
+    	    + "숫자형태 agent_id 건수={}, "
+    	    + "숫자타입 agent_id 건수={}, "
+    	    + "숫자타입 agent_id 샘플={}",
+    	    _centerId,
+    	    requestBody.getTenantId(),
+    	    requestBody.getSkillId(),
+    	    resultCode,
+    	    skillAgentResultDataCount,
+    	    assignedCounselorCount,
+    	    redisKey,
+    	    redisCounselorCount,
+    	    mapSkillAssignedCounselorList.size(),
+          numericValueIdCount,
+          numericTypeIdCount,
+          numericTypeIdSamples
+    	  );
+    	}
       
     } catch (Exception e) {
       e.printStackTrace();
